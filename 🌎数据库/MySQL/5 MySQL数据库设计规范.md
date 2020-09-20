@@ -1,20 +1,24 @@
 # 5 MySQL数据库设计规范
 
-## [1. 规范背景与目的](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#1-规范背景与目的)
+原文：https://github.com/jly8866/archer
+
+
+
+## 1. 规范背景与目的
 
 MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的优势与劣势。我们在使用MySQL数据库的时候需要遵循一定规范，扬长避短。本规范旨在帮助或指导RD、QA、OP等技术人员做出适合线上业务的数据库设计。在数据库变更和处理流程、数据库表设计、SQL编写等方面予以规范，从而为公司业务系统稳定、健康地运行提供保障。
 
 ##  
 
-## [2. 设计规范](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#2-设计规范)
+## 2. 设计规范
 
-### [2.1 数据库设计](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#21-数据库设计)
+### 2.1 数据库设计
 
 以下所有规范会按照【高危】、【强制】、【建议】三个级别进行标注，遵守优先级从高到低。
 
 对于不满足【高危】和【强制】两个级别的设计，DBA会强制打回要求修改。
 
-### [2.1.1 库名](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#211-库名)
+### 2.1.1 库名
 
 1. 【强制】库的名称必须控制在32个字符以内，相关模块的表名与表名之间尽量提现join的关系，如user表和user_login表。
 2. 【强制】库的名称格式：业务系统名称_子系统名，同一模块使用的表名尽量使用统一前缀。
@@ -23,7 +27,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 ###  
 
-### [2.1.2 表结构](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#212-表结构)
+### 2.1.2 表结构
 
 1. 【强制】表和列的名称必须控制在32个字符以内，表名只能使用字母、数字和下划线，一律小写。
 2. 【强制】表名要求模块名强相关，如师资系统采用”sz”作为前缀，渠道系统采用”qd”作为前缀等。
@@ -31,7 +35,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 4. 【强制】创建表时必须显式指定表存储引擎类型，如无特殊需求，一律为InnoDB。当需要使用除InnoDB/MyISAM/Memory以外的存储引擎时，必须通过DBA审核才能在生产环境中使用。因为Innodb表支持事务、行锁、宕机恢复、MVCC等关系型数据库重要特性，为业界使用最多的MySQL存储引擎。而这是其他大多数存储引擎不具备的，因此首推InnoDB。
 5. 【强制】建表必须有**comment**
 6. 【建议】建表时关于主键：(1)强制要求主键为id，类型为int或bigint，且为`auto_increment(2)`标识表里每一行主体的字段不要设为主键，建议设为其他字段如`user_id`，`order_id`等，并建立unique key索引（可参考`cdb.teacher`表设计）。因为如果设为主键且主键值为随机插入，则会导致innodb内部page分裂和大量随机I/O，性能下降。
-7. 【建议】核心表（如用户表，金钱相关的表）**必须有行数据的创建时间字段****`create_time`****和最后更新时间字段****`update_time`****，便于查问题。**
+7. 【建议】核心表（如用户表，金钱相关的表）必须有行数据的创建时间字段**`create_time`**和最后更新时间字段**`update_time`**，便于查问题。
 8. 【建议】表中所有字段必须都是`NOT NULL`属性，业务可以根据需要定义`DEFAULT`值。**因为使用NULL值会存在每一行都会占用额外存储空间、数据迁移容易出错、聚合函数计算结果偏差等问题。**
 9. 【建议】建议对表里的`blob`、`text`等大字段，垂直拆分到其他表里，仅在需要读这些对象的时候才去select。
 10. 【建议】**反范式设计**：把经常需要join查询的字段，在其他表里冗余一份。如`user_name`属性在`user_account`，`user_login_log`等表里冗余一份，**减少join查询。**
@@ -40,7 +44,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 ###  
 
-### [2.1.3 列数据类型优化](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#213-列数据类型优化)
+### 2.1.3 列数据类型优化
 
 1. 【建议】表中的自增列（`auto_increment`属性），推荐使用`bigint`类型。因为无符号`int`存储范围为`-2147483648~2147483647`（大约21亿左右），溢出后会导致报错。
 2. 【建议】业务中选择性很少的状态`status`、类型`type`等字段推荐使用`tinytint`或者`smallint`类型节省存储空间。
@@ -59,7 +63,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 ###  
 
-### [2.1.4 索引设计](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#214-索引设计)
+### 2.1.4 索引设计
 
 1. 【强制】InnoDB表必须主键为`id int/bigint auto_increment`,且主键值禁止被更新。
 2. 【建议】主键的名称以“`pk_`”开头，唯一键以“`uk_`”或“`uq_`”开头，普通索引以“`idx_`”开头，一律使用小写格式，以表名/字段的名称或缩写作为后缀。
@@ -72,7 +76,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 ###  
 
-### [2.1.5 分库分表、分区表](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#215-分库分表分区表)
+### 2.1.5 分库分表、分区表
 
 1. 【强制】分区表的分区字段（`partition-key`）必须有索引，或者是组合索引的首列。
 2. 【强制】单个分区表中的分区（包括子分区）个数不能超过1024。
@@ -87,14 +91,14 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 ###  
 
-### [2.1.6 字符集](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#216-字符集)
+### 2.1.6 字符集
 
 1. 【强制】数据库本身库、表、列所有字符集必须保持一致，为`utf8`或`utf8mb4`。
 2. 【强制】前端程序字符集或者环境变量中的字符集，与数据库、表的字符集必须一致，统一为`utf8`。
 
 ###  
 
-### [2.1.7 程序层DAO设计建议](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#217-程序层dao设计建议)
+### 2.1.7 程序层DAO设计建议
 
 1. 【建议】新的代码不要用model，推荐使用手动拼SQL+绑定变量传入参数的方式。因为model虽然可以使用面向对象的方式操作db，但是其使用不当很容易造成生成的SQL非常复杂，且model层自己做的强制类型转换性能较差，最终导致数据库性能下降。
 2. 【建议】前端程序连接MySQL或者redis，必须要有连接超时和失败重连机制，且失败重试必须有间隔时间。
@@ -108,7 +112,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 ###  
 
-### [2.1.8 一个规范的建表语句示例](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#218一个规范的建表语句示例)
+### 2.1.8 一个规范的建表语句示例
 
 一个较为规范的建表语句为：
 
@@ -136,9 +140,9 @@ KEY `idx_create_time`(`create_time`,`user_review_status`) ) ENGINE=InnoDB DEFAUL
 
 ##  
 
-## [2.2 SQL编写](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#22-sql编写)
+## 2.2 SQL编写
 
-### [2.2.1 DML语句](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#221-dml语句)
+### 2.2.1 DML语句
 
 1. 【强制】SELECT语句必须指定具体字段名称，禁止写成`*`。因为`select *`会将不该读的数据也从MySQL里读出来，造成网卡压力。且表字段一旦更新，但model层没有来得及更新的话，系统会报错。
 2. 【强制】insert语句指定具体字段名称，不要写成`insert into t1 values(…)`，道理同上。
@@ -160,7 +164,7 @@ KEY `idx_create_time`(`create_time`,`user_review_status`) ) ENGINE=InnoDB DEFAUL
 
 ###  
 
-### [2.2.2 多表连接](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#222-多表连接)
+### 2.2.2 多表连接
 
 1. 【强制】禁止跨db的join语句。因为这样可以减少模块间耦合，为数据库拆分奠定坚实基础。
 2. 【强制】禁止在业务的更新类SQL语句中使用join，比如`update t1 join t2…`。
@@ -171,7 +175,7 @@ KEY `idx_create_time`(`create_time`,`user_review_status`) ) ENGINE=InnoDB DEFAUL
 
 ###  
 
-### [2.2.3 事务](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#223-事务)
+### 2.2.3 事务
 
 1. 【建议】事务中`INSERT|UPDATE|DELETE|REPLACE`语句操作的行数控制在**2000**以内，以及WHERE子句中**IN列表的传参个数控制在500以内。**
 2. 【建议】批量操作数据时，需要控制事务处理间隔时间，进行必要的sleep，一般建议值5-10秒。
@@ -184,7 +188,7 @@ KEY `idx_create_time`(`create_time`,`user_review_status`) ) ENGINE=InnoDB DEFAUL
 
 ###  
 
-### [2.2.4 排序和分组](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#224-排序和分组)
+### 2.2.4 排序和分组
 
 1. 【建议】减少使用`order by`，和业务沟通能不排序就不排序，或将排序放到程序端去做。`order by`、`group by`、`distinct`这些语句较为耗费CPU，数据库的CPU资源是极其宝贵的。
 2. 【建议】`order by`、`group by`、`distinct`这些SQL尽量利用索引直接检索出排序好的数据。如`where a=1 order by`可以利用`key(a,b)`。
@@ -192,7 +196,7 @@ KEY `idx_create_time`(`create_time`,`user_review_status`) ) ENGINE=InnoDB DEFAUL
 
 ###  
 
-### [2.2.5 线上禁止使用的SQL语句](https://github.com/jly8866/archer/blob/master/src/docs/mysql_db_design_guide.md#225-线上禁止使用的sql语句)
+### 2.2.5 线上禁止使用的SQL语句
 
 1. 【高危】禁用`update|delete t1 … where a=XX limit XX;` 这种带limit的更新语句。因为会导致主从不一致，导致数据错乱。建议加上`order by PK`。
 2. 【高危】禁止使用关联子查询，如`update t1 set … where name in(select name from user where…);`效率极其低下。

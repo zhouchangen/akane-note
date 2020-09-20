@@ -1,6 +1,6 @@
 # 5 consul
 
-### 获取配置
+### 1 获取配置
 
 如果没有对应环境的consul权限，可以使用
 
@@ -10,21 +10,28 @@
 
 
 
-
-
-### consul删除服务
+### 2 consul删除服务
 
 方式1：**PUT**请求：
 
+```
 [http://server_ip:8500/v1/agent/service/deregister/gateway-service-9003](https://blog.csdn.net/v1/agent/service/deregister/paas-portal-sit-9003)
+```
+
+
 
 方式2：直接服务器请求：
 
-curl -X PUT [http://server_ip:8500/v1/agent/service/deregister/gateway-service-9003](https://blog.csdn.net/v1/agent/service/deregister/paas-portal-sit-9003)
+```
+curl -X PUT [http://server_ip:8500/v1/agent/service/deregister/gateway-service-9003]
+
+// gateway-service-9003 为服务名
+// server_ip:8500 为consul的ip和端口
+
+
+```
+
+https://blog.csdn.net/v1/agent/service/deregister/paas-portal-sit-9003
 
  
-
-[gateway-service-9003](https://blog.csdn.net/v1/agent/service/deregister/paas-portal-sit-9003) 为服务名
-
-[server_ip:8500](https://blog.csdn.net/v1/agent/service/deregister/paas-portal-sit-9003) 为consul的ip和端口
 

@@ -10,7 +10,7 @@ REmote DIctionary Server(Redis)
 
 
 
-基于**版本6.0.3**的Redis笔记，阅读Redis的配置文件并翻译，见[redis.conf](https://www.yuque.com/mizu/akane-note/redis.conf)。对Redis主流的应用进行实战演示。由于Redis配置文件中有一些知识晦涩难懂，并不是所有内容都进行了翻译，但是常用的配置都已翻译，只有少数的两三个模块未完全翻译。另外，翻译不正确的地方请PR。最后，会推荐一些我在学习Redis时，看到觉得不错的文章和教程。代码示例见[demo](https://www.yuque.com/mizu/akane-note/demo)，为了方便我已将示例配置文件放在[conf](https://www.yuque.com/mizu/akane-note/conf)。
+基于**版本6.0.3**的Redis笔记，阅读Redis的配置文件并翻译，见[redis.conf](./2 redis.conf中文翻译.md)。对Redis主流的应用进行实战演示。由于Redis配置文件中有一些知识晦涩难懂，并不是所有内容都进行了翻译，但是常用的配置都已翻译，只有少数的两三个模块未完全翻译。另外，翻译不正确的地方请PR。最后，会推荐一些我在学习Redis时，看到觉得不错的文章和教程。代码示例见[demo](https://www.yuque.com/mizu/akane-note/demo)，为了方便我已将示例配置文件放在[conf](https://www.yuque.com/mizu/akane-note/conf)。
 
 
 
@@ -20,8 +20,6 @@ REmote DIctionary Server(Redis)
 
 ## Redis误区和问题
 
-
-
 **Redis是单线程的？**
 
 Redis是基于内存的。主要是单线程的，然而有些操作，例如UNLINK、 slow I/O处理或其他的时候，需要开始额外的线程(用于实现非阻塞)，具体原因请阅读`redis.conf`中的`THREADED I/O`模块。
@@ -29,8 +27,6 @@ Redis是基于内存的。主要是单线程的，然而有些操作，例如UNL
 
 
 **为什么Redis那么快？**
-
-
 
 Redis是基于内存的，CPU并不是Redis性能瓶颈，Redis的瓶颈是机器的内存和网络带宽。因为是单线程(没有CPU上下文切换)，读写都在一个CPU上，导致Redis非常的快。
 
@@ -83,8 +79,6 @@ Redis是基于内存的，CPU并不是Redis性能瓶颈，Redis的瓶颈是机�
 
 **缓存击穿**
 
-
-
 对于一些设置了过期时间的key，如果这些key可能会在某些时间点被超高并发地访问，是一种非常“热点”的数据。这个时候，如果缓存失效了，就会直接访问数据库，就被击穿了。这个和缓存雪崩的区别在于这里针对某一key缓存，前者则是很多key。
 
 
@@ -103,8 +97,6 @@ Redis是基于内存的，CPU并不是Redis性能瓶颈，Redis的瓶颈是机�
 
 **分布式锁**
 
-
-
 场景：避免不同节点重复处理、避免数据被破坏
 
 1. 必须设置超时时间，防止服务挂掉未释放锁
@@ -113,8 +105,6 @@ Redis是基于内存的，CPU并不是Redis性能瓶颈，Redis的瓶颈是机�
 
 
 ### Redis配置
-
-
 
 Redis在配置文件中，将配置根据不同功能和模块进行划分，你可以按照关键字搜索阅读指定的模块，如下形式:
 
@@ -169,8 +159,8 @@ Redis在配置文件中，将配置根据不同功能和模块进行划分，你
 
 
 
-- [主从复制-读写分离](https://www.yuque.com/mizu/akane-note/主从复制.md)
-- [哨兵模式](https://www.yuque.com/mizu/akane-note/哨兵模式.md)
+- 主从复制-读写分离
+- 哨兵模式
 - 集群
 
 
@@ -189,11 +179,7 @@ Redis在配置文件中，将配置根据不同功能和模块进行划分，你
 
 ## 后记
 
-
-
 要想深入了解Redis，光是了解这些肯定是不够的。这里只是引个例子，当我们想学习一门知识的时候，如何去学习。在这里，主要的学习过程是：
-
-
 
 1. 了解Redis是什么
 2. Redis的使用，包括基本的命令和企业级的开发

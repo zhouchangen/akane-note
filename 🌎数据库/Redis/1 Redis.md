@@ -1,7 +1,5 @@
 # 1 Redis
 
-
-
 ## 1 Redis常用命令
 
 见 4 Redis常用命令
@@ -56,6 +54,8 @@ redis在进行快照的过程中不会对RDB文件进行修改，只有快照结
 
 ![image.png](images/rdb.png)
 
+
+
 ![image.png](images/rdb2.png)
 
 
@@ -65,8 +65,6 @@ redis在进行快照的过程中不会对RDB文件进行修改，只有快照结
 1. 满足save规则
 2. 执行flushall
 3. 退出redis
-
-
 
 
 

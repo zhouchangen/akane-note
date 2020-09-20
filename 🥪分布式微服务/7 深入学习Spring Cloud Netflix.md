@@ -465,7 +465,7 @@ ribbon.ReadTimeout=20000
 
 为了确保Ribbon重试的时候不被熔断，我们就需要让Hystrix的超时时间大于Ribbon的超时时间，否则Hystrix命令超时后，该命令直接熔断，重试机制就没有任何意义了。  
 
-# 
+
 
 ## 常用配置
 
@@ -526,8 +526,6 @@ ribbon.MaxAutoRetries=0
 
 
 
-
-##  
 
 ## Feign client规范
 

@@ -1372,8 +1372,8 @@ synchronized**只锁定当前链表或红黑二又树的首节点**，这样只�
 
 ### 4.3 JSON中取数据
 
-
-
 ```
 markCode = net.sf.json.JSONObject.fromObject(markCodesStr).getString("markCode");
+
+// 其实，也可以用Java中的index + subString 去获取
 ```

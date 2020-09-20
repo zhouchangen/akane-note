@@ -11,10 +11,10 @@
 | top                                                    | 查系统消耗高的进程                                           |
 | top –H –p #pid#                                        | 根据pid查出进程中子进程                                      |
 | jstack #进程pid# \| grep #子线程pid(16)位#             | 查看占用cpu高的子线程                                        |
-| **jmap –heap #pid#**                                   | **查看堆信息，可以看到堆使用情况和****jvm****配置参数**      |
-| jstat –gc #pid#                                        | **(**JVM statistics Monitoring**)用**于监视虚拟机运行时状态信息的命令 **查看内存使用百分比，****jvm GC****情况，**可以显示出虚拟机进程中的类装载、内存、垃圾收集、JIT编译等运行数据。 |
+| **jmap –heap #pid#**                                   | **查看堆信息，可以看到堆使用情况和jvm配置参数**              |
+| jstat –gc #pid#                                        | **(**JVM statistics Monitoring**)用**于监视虚拟机运行时状态信息的命令 **查看内存使用百分比，jvm GC情况，**可以显示出虚拟机进程中的类装载、内存、垃圾收集、JIT编译等运行数据。 |
 | **jstat –gcutil #pid#**                                | 同-gc，不过输出的是已使用空间占总空间的百分比                |
-| **jmap –dump:format=b,file=/tmp/20200101.hprof #pid#** | **生成当前****jvm****内存快照 用于后续分析**                 |
+| **jmap –dump:format=b,file=/tmp/20200101.hprof #pid#** | **生成当前jvm内存快照 用于后续分析**                         |
 | jmap –histo:live #pid#                                 | 打印每个类的实例数量 内存占用信息 加上live可以手工触发一次fullGC |
 | jinfo –flags #pid#                                     | 可以查看当前进程JVM的所有配置信息                            |
 | jps -l -m                                              | JVM Process Status Tool,显示指定系统内所有的HotSpot虚拟机进程 |
@@ -92,7 +92,7 @@ PS Old Generation
 
 PS Old Generation从目前来看，老年代还可以。Eden 和S0(From Space)、S1(To Space)比例失调
 
-**(****因为JDK8新生代用的ParallelScavengeGC算法，默认在内存分配压力大的时候压缩Survivor区，从此可以看出内存分配压力过大****)**
+**(因为JDK8新生代用的ParallelScavengeGC算法，默认在内存分配压力大的时候压缩Survivor区，从此可以看出内存分配压力过大)**
 
 
 

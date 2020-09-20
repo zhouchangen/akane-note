@@ -2,7 +2,7 @@
 
 
 
-### 防火墙
+### 1 防火墙
 
 ```
 systemctl start firewalld  # 开启防火墙
@@ -25,7 +25,7 @@ sudo su
 
 
 
-### Linux环境下如何查找哪个线程使用CPU最长
+### 2 Linux环境下如何查找哪个线程使用CPU最长
 
 1. 获取项目的pid，jps或者ps -ef | grep java，这个前面有讲过
 2. top -H -p pid，顺序不能改变
