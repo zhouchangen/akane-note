@@ -14,7 +14,7 @@
 
 ### doService
 
-```
+```java
     protected void doService(HttpServletRequest request, HttpServletResponse response) throws Exception {
         this.logRequest(request);
         Map<String, Object> attributesSnapshot = null;
@@ -67,7 +67,7 @@
 
 这里是重点地方，整个大体的执行流程都在这里了。
 
-```
+```java
     protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
         HttpServletRequest processedRequest = request;
         HandlerExecutionChain mappedHandler = null;
@@ -142,7 +142,7 @@
 
 HandlerMethod和Handler
 
-```
+```java
  public void register(T mapping, Object handler, Method method) {
             if (KotlinDetector.isKotlinType(method.getDeclaringClass())) {
                 Class<?>[] parameterTypes = method.getParameterTypes();

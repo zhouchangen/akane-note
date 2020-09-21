@@ -27,8 +27,6 @@ curl -X PUT [http://server_ip:8500/v1/agent/service/deregister/gateway-service-9
 
 // gateway-service-9003 为服务名
 // server_ip:8500 为consul的ip和端口
-
-
 ```
 
 https://blog.csdn.net/v1/agent/service/deregister/paas-portal-sit-9003

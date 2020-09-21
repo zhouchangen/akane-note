@@ -9,7 +9,7 @@
 
 ## 常用配置
 
-```
+```properties
 server.port= #服务端口
 #tomcat启动的最大线程数
 server.tomcat.max-connections=1000 

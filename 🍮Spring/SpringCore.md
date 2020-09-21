@@ -20,7 +20,7 @@ https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/inde
 
 **ClassPathXmlApplicationContext**
 
-```
+```java
 public static void main(String[] args) {
         ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:/META-INF/spring-core.xml");
 }
@@ -30,7 +30,7 @@ public static void main(String[] args) {
 
 **AnnotationConfigApplicationContext**
 
-```
+```java
 public static void main(String[] args) {
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
         applicationContext.register(BeanConfiguration.class);
@@ -66,7 +66,7 @@ public static void main(String[] args) {
 2. **设置配置文件路径**
 3. **刷新容器**
 
-```
+```java
 public ClassPathXmlApplicationContext(
             String[] configLocations, boolean refresh, @Nullable ApplicationContext parent)
             throws BeansException {
@@ -87,7 +87,7 @@ public ClassPathXmlApplicationContext(
 
 ResourceLoader是对资源加载器的抽象
 
-```
+```java
 public AbstractApplicationContext(ApplicationContext parent) {
     this();
     setParent(parent);
@@ -101,7 +101,7 @@ public AbstractApplicationContext() {
 
 **getResourcePatternResolver()**
 
-```
+```java
 protected ResourcePatternResolver getResourcePatternResolver() {
     return new PathMatchingResourcePatternResolver(this);
 }
@@ -117,7 +117,7 @@ PathMatchingResourcePatternResolver支持Ant风格的路径解析
 
 解析的方法就是resolvePath()
 
-```
+```java
     /**
      * Set the config locations for this application context.
      * <p>If not set, the implementation may use a default as appropriate.
@@ -145,7 +145,7 @@ PathMatchingResourcePatternResolver支持Ant风格的路径解析
 
 `new ClassPathXmlApplicationContext("classpath:config.xml");`那么classpath:就是需要被解析的。
 
-```
+```java
     /**
      * Resolve the given path, replacing placeholders with corresponding
      * environment property values if necessary. Applied to config locations.
@@ -216,7 +216,7 @@ ConfigurablePropertyResolver (org.springframework.core.env)
 
 org.springframework.context.EnvironmentAware
 
-```
+```java
  * @author Chris Beams
  * @since 3.1
  * @see PropertyResolver
@@ -252,7 +252,7 @@ org.springframework.core.env.PropertyResolver
 
 默认的MutablePropertySources实现内部含有一个CopyOnWriteArrayList作为存储载体
 
-```
+```java
 public abstract class AbstractEnvironment implements ConfigurableEnvironment {
     
     // 默认的MutablePropertySources实现内部含有一个CopyOnWriteArrayList作为存储载体
@@ -277,7 +277,7 @@ PropertySource接口代表了键值对的Property来源
 
 这里研究StandardEnvironment里的是如何添加PropertySources，底层其实调用的是System.getProperty(attributeName);
 
-```
+```java
 public class StandardEnvironment extends AbstractEnvironment {
 
     /** System environment property source name: {@value}. */
@@ -315,7 +315,7 @@ public class StandardEnvironment extends AbstractEnvironment {
 
 底层调用的是System.getProperty(attributeName);这里的实现很有意思，如果安全管理器阻止获取全部的系统属性，那么会尝试获取单个属性的可能性，如果还不行就抛异常了。**getSystemEnvironment()同。**
 
-```
+```java
 @Override
 public Map<String, Object> getSystemProperties() {
     try {
@@ -356,7 +356,7 @@ public Map<String, Object> getSystemProperties() {
 
 解析占位符
 
-```
+```java
 @Override
 public String resolveRequiredPlaceholders(String text) throws IllegalArgumentException {
     if (this.strictHelper == null) {
@@ -377,7 +377,7 @@ public String resolveRequiredPlaceholders(String text) throws IllegalArgumentExc
 -   valueSeparator = **":"
   **
 
-```
+```java
 private PropertyPlaceholderHelper createPlaceholderHelper(boolean ignoreUnresolvablePlaceholders) {
 
     return new PropertyPlaceholderHelper(this.placeholderPrefix, this.placeholderPrefix,
@@ -391,7 +391,7 @@ private PropertyPlaceholderHelper createPlaceholderHelper(boolean ignoreUnresolv
 
 解析占位符
 
-```
+```java
     private String doResolvePlaceholders(String text, PropertyPlaceholderHelper helper) {
         return helper.replacePlaceholders(text, this::getPropertyAsRawString);
     }
@@ -403,7 +403,7 @@ private PropertyPlaceholderHelper createPlaceholderHelper(boolean ignoreUnresolv
 
 其实代码执行到这里的时候还没有进行xml配置文件的解析，那么这里的解析placeHolder是什么意思呢，原因在于可以这么写:
 
-```
+```java
 System.setProperty("spring", "classpath");
 ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("${spring}:config.xml");
 SimpleBean bean = context.getBean(SimpleBean.class);
@@ -413,7 +413,7 @@ getPropertyAsRawString()
 
 将占位符（placeHolder）还原为原生字符串。
 
-```
+```java
     /**
      * Retrieve the specified property as a raw String,
      * i.e. without resolution of nested placeholders.
@@ -448,7 +448,7 @@ parseStringValue
 
 这里的parseStringValue就会替换placeholder了，例如${name}
 
-```
+```java
     public String replacePlaceholders(String value, PlaceholderResolver placeholderResolver) {
         Assert.notNull(value, "'value' must not be null");
         return parseStringValue(value, placeholderResolver, null);
@@ -463,7 +463,7 @@ parseStringValue
 
 这一部分并还未开始解析xml配置，主要是解析占位符，设置配置文件路径。在这里引入了Environment的概念，应用的两个方面是：profiles、properties。如果你注意到Environment上的注释，这里还引入了**Aware**的概念，提供一个回调的函数。例如：EnvironmentAware。
 
-```
+```java
 /**
  * A marker superinterface indicating that a bean is eligible to be notified by the
  * Spring container of a particular framework object through a callback-style method.
@@ -515,7 +515,7 @@ public interface Aware {
 
 容器的刷新是最重要的环节，这里会一步一步进行分析，首先这里会加一个synchronized锁，锁的是一个Object对象。
 
-```
+```java
 /** Synchronization monitor for the "refresh" and "destroy". */
 private final Object startupShutdownMonitor = new Object();
 
@@ -590,7 +590,7 @@ public void refresh() throws BeansException, IllegalStateException {
 
 refresh前的准备，如设置一下启动时间和属性校验，这里有个initPropertySources()方法，但是默认是空实现，由其子类去实现。
 
-```
+```java
 /**
      * Prepare this context for refreshing, setting its startup date and
      * active flag as well as performing any initialization of property sources.
@@ -641,7 +641,7 @@ refresh前的准备，如设置一下启动时间和属性校验，这里有个i
 
 requiredProperties默认是空的，也就是不需要校验任何属性
 
-```
+```java
 private final Set<String> requiredProperties = new LinkedHashSet<>();
 
 public void validateRequiredProperties() {
@@ -669,7 +669,7 @@ public void validateRequiredProperties() {
 
 告诉子类去刷新内部的容器，由方法名称refreshBeanFactory我们大概可以猜到，这个BeanFactory就是Bean容器
 
-```
+```java
     /**
      * Tell the subclass to refresh the internal bean factory.
      * @return the fresh BeanFactory instance
@@ -699,7 +699,7 @@ ListableBeanFactory
 
 **BeanFactory**
 
-```
+```java
     /**
      * This implementation performs an actual refresh of this context's underlying
      * bean factory, shutting down the previous bean factory (if any) and
@@ -815,7 +815,7 @@ ListableBeanFactory
 
 **HierarchicalBeanFactory：用于处理父子容器的工厂**
 
-```
+```java
 /**
  * Extension of the {@link BeanFactory} interface to be implemented by bean factories
  * that can enumerate all their bean instances, rather than attempting bean lookup
@@ -879,7 +879,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 
 **AbstractRefreshableApplicationContext.customizeBeanFactory()**给子类提供一个自由配置的机会
 
-```
+```java
 /**
      * Customize the internal bean factory used by this context.
      * Called for each {@link #refresh()} attempt.
@@ -916,7 +916,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 
 
 
-```
+```java
     /**
      * Loads the bean definitions via an XmlBeanDefinitionReader.
      * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
@@ -952,7 +952,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 
 **loadBeanDefinitions(beanDefinitionReader);**
 
-```
+```java
     /**
      * Load the bean definitions with the given XmlBeanDefinitionReader.
      * <p>The lifecycle of the bean factory is handled by the {@link #refreshBeanFactory}
@@ -1010,7 +1010,7 @@ org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#doRegi
 
 ### BeanDefinition 
 
-```
+```java
 /**
  * A BeanDefinition describes a bean instance, which has property values,
  * constructor argument values, and further information supplied by
@@ -1056,7 +1056,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 流程如下注释
 
-```
+```java
     /**
      * Configure the factory's standard context characteristics,
      * such as the context's ClassLoader and post-processors.
@@ -1123,7 +1123,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 此方法允许子类在所有的bean尚未初始化之前注册**BeanPostProcessor**。空实现且没有子类覆盖。
 
-```
+```java
 try {
                 // Allows post-processing of the bean factory in context subclasses.
                 postProcessBeanFactory(beanFactory);
@@ -1135,7 +1135,7 @@ try {
 
 BeanFactoryPostProcessor接口允许我们在bean正是初始化之前改变其值。此接口只有一个方法:
 
-```
+```java
 void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory);
 ```
 
@@ -1153,7 +1153,7 @@ void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory);
 
 此方法的关键源码:
 
-```
+```java
 protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
     PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory,
         getBeanFactoryPostProcessors());
@@ -1190,7 +1190,7 @@ getBeanFactoryPostProcessors获取的就是AbstractApplicationContext的成员be
 
 MESSAGE_SOURCE_BEAN_NAME = messageSource
 
-```
+```java
 protected void initMessageSource() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
         if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
@@ -1259,7 +1259,7 @@ ApplicationContext (org.springframework.context)
 
 **自定义国际化**
 
-```
+```java
 @Component("messageSource") // 注入名称未messageSource，原因是由上面代码可以看出初始化国际化时，
 // 寻找的Bean名称就是MESSAGE_SOURCE_BEAN_NAME = messageSource
 public class TranslationSource extends ResourceBundleMessageSource {
@@ -1289,7 +1289,7 @@ public class TranslationSource extends ResourceBundleMessageSource {
 
 事件驱动，类似于我们常说的观察者模式。
 
-```
+```java
     /**
      * Initialize the ApplicationEventMulticaster.
      * Uses SimpleApplicationEventMulticaster if none defined in the context.
@@ -1345,7 +1345,7 @@ public class TranslationSource extends ResourceBundleMessageSource {
 
 **自定义事件**
 
-```
+```java
 public class ContentEvent extends ApplicationEvent {  
     public ContentEvent(final String content) {  
         super(content);  
@@ -1355,7 +1355,7 @@ public class ContentEvent extends ApplicationEvent {
 
 **自定义监听器**
 
-```
+```java
 @Component
 public class MyListener implements ApplicationListener<ContentEvent> {  // ContentEvent通过泛型注入
     @Override  
@@ -1385,7 +1385,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 在initApplicationEventMulticaster()只是初始化事件驱动，在这里接着就是注册监听器了。
 
-```
+```java
     /**
      * Add beans that implement ApplicationListener as listeners.
      * Doesn't affect other listeners, which can be added without being beans.
@@ -1432,7 +1432,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 
 
-```
+```java
     /**
      * Finish the initialization of this context's bean factory,
      * initializing all remaining singleton beans.
@@ -1480,7 +1480,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 初始化Bean
 
-```
+```java
     @Override
     public void preInstantiateSingletons() throws BeansException {
         if (logger.isTraceEnabled()) {
@@ -1564,7 +1564,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 我们看到这里获取的区别，仅仅是多了 **String** **FACTORY_BEAN_PREFIX**= **"&**"; 其实这个问题源码里就有注释，如果beanName是不带&表示的是一个返回Bean实例，如果带了表示的是一个工厂(factory)，用于返回Bean实例的工厂。
 
-```
+```java
     /**
      * Used to dereference a {@link FactoryBean} instance and distinguish it from
      * beans <i>created</i> by the FactoryBean. For example, if the bean named
@@ -1585,7 +1585,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 而FactoryBean和BeanFactory只是名字看起来有关联，实则它们没什么关系。下面是源码里的注释，简单来说FactoryBean是一个返回Bean实例的工厂，在这里并不直接返回Bean，这样的好处就是我们可以对Bean做更多的扩展。
 
-```
+```java
 /**
  * Interface to be implemented by objects used within a {@link BeanFactory} which
  * are themselves factories for individual objects. If a bean implements this
@@ -1633,7 +1633,7 @@ public interface FactoryBean<T> {
 
 SmartFactoryBean继承了FactoryBean，源码里的注释不是很理解。
 
-```
+```java
 /**
  * Extension of the {@link FactoryBean} interface. Implementations may
  * indicate whether they always return independent instances, for the
@@ -1670,7 +1670,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 第二个参数表示bean的Class类型，第三个表示创建bean需要的参数，最后一个表示不需要进行类型检查。
 
-```
+```java
     public Object getBean(String name) throws BeansException {
         return doGetBean(name, null, null, false);
     }
@@ -1693,7 +1693,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 
 
-```
+```java
 /**
      * Return an instance, which may be shared or independent, of the specified bean.
      * @param name the name of the bean to retrieve
@@ -1901,7 +1901,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 处理前缀&，subString
 
-```
+```java
     public static String transformedBeanName(String name) {
         Assert.notNull(name, "'name' must not be null");
         if (!name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
@@ -1921,7 +1921,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 处理别名，可以看到这里缓存了一个别名的map
 
-```
+```java
     /**
      * Determine the raw name, resolving aliases to canonical names.
      * @param name the user-specified name
@@ -1952,7 +1952,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 参数一BeanName，参数二是否要创建EarlyReference
 
-```
+```java
     public Object getSingleton(String beanName) {
         return getSingleton(beanName, true);
     }
@@ -1970,7 +1970,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 - **二级缓存earlySingletonObjects**:  缓存早期(early)的Bean，也就是未完成生命周期的Bean
 - **三级缓存singletonFactories**: 缓存ObjectFactory，对象的工厂
 
-```
+```java
     /** Cache of singleton objects: bean name to bean instance. */
     private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
@@ -2017,7 +2017,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 在这里是获取而不是创建，如果是非Spring手动注入的Bean，那么第一次肯定获取返回的是null，就会走创建的逻辑。这里我们关注的单例Bean的创建。
 
-```
+```java
 // Create bean instance.
 if (mbd.isSingleton()) {
     sharedInstance = getSingleton(beanName, () -> {
@@ -2046,7 +2046,7 @@ if (mbd.isSingleton()) {
 
 
 
-```
+```java
     /**
      * Central method of this class: creates a bean instance,
      * populates the bean instance, applies post-processors, etc.
@@ -2140,7 +2140,7 @@ ClassPathXmlApplicationContext#**refresh**
 1. createBeanInstance创建BeanWrapper
 2. populateBean属性解析，根据autowire类型进行autowire by name，by type 或者是直接进行设置
 
-```
+```java
     /**
      * Actually create the specified bean. Pre-creation processing has already happened
      * at this point, e.g. checking {@code postProcessBeforeInstantiation} callbacks.

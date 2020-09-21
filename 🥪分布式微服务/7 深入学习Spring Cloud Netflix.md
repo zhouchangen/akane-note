@@ -15,7 +15,7 @@ Feign是一种声明式、模板化的HTTP客户端。在Spring Cloud中使用Fe
 1. @FeignClient
 2. @EnableFeignClients
 
-```
+```java
 import com.example.order.service.OrderWsService;
 import com.example.order.web.config.OrderServiceFallbackFactory;
 import com.example.order.web.config.OrderServiceRemoteConfiguration;
@@ -35,7 +35,7 @@ public interface OrderServiceRemote extends OrderWsService {
 
 ### FeignClient说明
 
-```
+```java
 /**
  * Annotation for interfaces declaring that a REST client with that interface should be
  * created (e.g. for autowiring into another component). If ribbon is available it will be
@@ -258,7 +258,7 @@ hystrix处理流程
 - com.netflix.hystrix.HystrixThreadPoolProperties
 - ......
 
-```
+```java
 public @interface HystrixCommand {
 
     /**
@@ -451,7 +451,7 @@ observableExecutionMode = ObservableExecutionMode.LAZY
 
 Ribbon是一个客户端的负载均衡器，可以提供很多HTTP和TCP的控制行为。Feign拥有重试机制，主要是因为它集成了Ribbon模块，所以如果你使用了Feign，Riboon也同样被应用了。 
 
-```
+```properties
 # hystrix
 # 超时熔断时间
 hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=50000
@@ -473,7 +473,7 @@ ribbon.ReadTimeout=20000
 
 
 
-```
+```properties
 # Feign配置
 # 开启Hystrix降级
 feign.hystrix.enabled=true
@@ -491,7 +491,7 @@ feign.compression.request.min-request-size=2048
 
 ### Hystrix
 
-```
+```properties
 # hystrix.command配置
 # 关闭command超时功能（可以默认使用读取超时）
 hystrix.command.default.execution.timeout.enabled=false
@@ -509,7 +509,7 @@ hystrix.threadpool.default.coreSize =10
 
 ### Ribbon
 
-```
+```properties
 # ribbon配置
 # 请求连接超时时间
 ribbon.ConnectTimeout=600
@@ -529,7 +529,7 @@ ribbon.MaxAutoRetries=0
 
 ## Feign client规范
 
-```
+```java
 • FeignClient 
 （以下示例 代码有采用了api抽离jar包的方式，所有FeignClient的接口继承了API中的接口）
 1. 强制使用熔断使用fallbackFactory降级
