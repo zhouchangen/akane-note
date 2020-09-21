@@ -2137,7 +2137,8 @@ ClassPathXmlApplicationContext#**refresh**
 
 #### AbstractAutowireCapableBeanFactory.doCreateBean()
 
-
+1. createBeanInstance创建BeanWrapper
+2. populateBean属性解析，根据autowire类型进行autowire by name，by type 或者是直接进行设置
 
 ```
     /**
@@ -2200,6 +2201,7 @@ ClassPathXmlApplicationContext#**refresh**
         // Initialize the bean instance.
         Object exposedObject = bean;
         try {
+            // 属性解析， populateBean -> applyPropertyValues设置值
             populateBean(beanName, mbd, instanceWrapper);
             exposedObject = initializeBean(beanName, exposedObject, mbd);
         }
@@ -2252,6 +2254,153 @@ ClassPathXmlApplicationContext#**refresh**
         return exposedObject;
     }
 ```
+
+
+
+#### 创建Bean的实例 createBeanInstance
+
+1. BeanWrapper
+2. 构造器自动装配autowire
+
+```java
+	/**
+	 * Create a new instance for the specified bean, using an appropriate instantiation strategy:
+	 * factory method, constructor autowiring, or simple instantiation.
+	 * @param beanName the name of the bean
+	 * @param mbd the bean definition for the bean
+	 * @param args explicit arguments to use for constructor or factory method invocation
+	 * @return a BeanWrapper for the new instance
+	 * @see #obtainFromSupplier
+	 * @see #instantiateUsingFactoryMethod
+	 * @see #autowireConstructor
+	 * @see #instantiateBean
+	 */
+	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
+		// Make sure bean class is actually resolved at this point.
+		Class<?> beanClass = resolveBeanClass(mbd, beanName);
+
+		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
+			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
+					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
+		}
+
+		Supplier<?> instanceSupplier = mbd.getInstanceSupplier();
+		if (instanceSupplier != null) {
+			return obtainFromSupplier(instanceSupplier, beanName);
+		}
+
+		if (mbd.getFactoryMethodName() != null) {
+ 		    // 初始化一个BeanWrapperImpl对象
+ 		    // 根据设置的参数列表使用反射的方法寻找相应的方法对象
+			return instantiateUsingFactoryMethod(beanName, mbd, args);
+		}
+
+		// Shortcut when re-creating the same bean...
+		boolean resolved = false;
+		boolean autowireNecessary = false;
+		if (args == null) {
+			synchronized (mbd.constructorArgumentLock) {
+				if (mbd.resolvedConstructorOrFactoryMethod != null) {
+					resolved = true;
+					autowireNecessary = mbd.constructorArgumentsResolved;
+				}
+			}
+		}
+		if (resolved) {
+			if (autowireNecessary) {
+				return autowireConstructor(beanName, mbd, null, null);
+			}
+			else {
+				return instantiateBean(beanName, mbd);
+			}
+		}
+
+		// Candidate constructors for autowiring?
+		// 构造器自动装配
+		// 1.得到合适的构造器对象
+		// 2.根据构造器参数的类型去BeanFactory查找相应的bean
+		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
+		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
+				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
+			return autowireConstructor(beanName, mbd, ctors, args);
+		}
+
+		// Preferred constructors for default construction?
+		ctors = mbd.getPreferredConstructors();
+		if (ctors != null) {
+			return autowireConstructor(beanName, mbd, ctors, null);
+		}
+
+		// No special handling: simply use no-arg constructor.
+		return instantiateBean(beanName, mbd);
+	}
+```
+
+
+
+#### initializeBean
+
+1. invokeAwareMethods 触发Aware方法
+2. applyBeanPostProcessorsBeforeInitialization 触发BeanPostProcessorsBeforeInitialization
+3. applyBeanPostProcessorsAfterInitialization 触发BeanPostProcessorsAfterInitialization
+
+```java
+	/**
+	 * Initialize the given bean instance, applying factory callbacks
+	 * as well as init methods and bean post processors.
+	 * <p>Called from {@link #createBean} for traditionally defined beans,
+	 * and from {@link #initializeBean} for existing bean instances.
+	 * @param beanName the bean name in the factory (for debugging purposes)
+	 * @param bean the new bean instance we may need to initialize
+	 * @param mbd the bean definition that the bean was created with
+	 * (can also be {@code null}, if given an existing bean instance)
+	 * @return the initialized bean instance (potentially wrapped)
+	 * @see BeanNameAware
+	 * @see BeanClassLoaderAware
+	 * @see BeanFactoryAware
+	 * @see #applyBeanPostProcessorsBeforeInitialization
+	 * @see #invokeInitMethods
+	 * @see #applyBeanPostProcessorsAfterInitialization
+	 */
+	protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
+		if (System.getSecurityManager() != null) {
+			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+				invokeAwareMethods(beanName, bean);
+				return null;
+			}, getAccessControlContext());
+		}
+		else {
+		    // Aware方法触发
+			invokeAwareMethods(beanName, bean);
+		}
+
+		Object wrappedBean = bean;
+		if (mbd == null || !mbd.isSynthetic()) {
+		    // BeanPostProcessorsBeforeInitialization触发
+			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+		}
+
+		try {
+		    // 调用init方法
+		    // 1. afterPropertiesSet
+		    // 2. invokeCustomInitMethod
+			invokeInitMethods(beanName, wrappedBean, mbd);
+		}
+		catch (Throwable ex) {
+			throw new BeanCreationException(
+					(mbd != null ? mbd.getResourceDescription() : null),
+					beanName, "Invocation of init method failed", ex);
+		}
+		if (mbd == null || !mbd.isSynthetic()) {
+		    // 触发BeanPostProcessorsAfterInitialization
+			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+		}
+
+		return wrappedBean;
+	}
+```
+
+
 
 
 
