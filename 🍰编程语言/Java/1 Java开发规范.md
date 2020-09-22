@@ -224,8 +224,7 @@ Impl 的后缀与接口区别。
 
 6） **高度注意 Map类集合 K/V能不能存储 null值的情况**
 
-**
-**![image.png](images/java1.png)
+![image.png](images/java1.png)
 
 
 
@@ -521,8 +520,6 @@ version+1，开始的时候取出version，最后要执行操作的时候，vers
 
 ### 2.6 Linux上传
 
-
-
 ```
 sz
 rz
@@ -558,3 +555,73 @@ mstsc: microsoft terminal services client
 3. 很不建议在循环里面去发起远程调用；这种调用最好能合并，或者减少调用次数（最好能有调用上限，比如只循环10次）
 
 4. selectOne 如果数据库不能保证唯一会有问题，使用的时候 需要保证查询的数据 在数据库一定是 唯一； 唯一索引可保证
+
+
+
+## 代码规范
+
+1.**【建议】及时去除无用代码**
+
+2.**【警告】空指针问题**，如日志记录场景常存在以下错误习惯
+
+bad示例**：**这里判断了detail为空，却又调用detail.getRefNo()
+
+```java
+if(Objects.isNull(detail)){    
+	log.error("outOfStock is error,refNo:{}", detail.getRefNo()); 
+}
+```
+
+3.**【强制】Java值传递** 
+
+Java中只有值传递，没有引用传递。并不能改变参数的引用指向。
+
+```java
+public class Main {     
+    public static void main(String[] args) {        
+        User user = null;        
+        buildUser(user);        
+        System.out.println("user:" + user); // null  
+    }     
+    
+    public static void buildUser(User user){        
+        user = new User();    
+    } 
+}
+```
+
+4.**【强制】BigDecimal(double val)不推荐使用，推荐使用BigDecimal(String val)能得到精确的对应值**
+
+5.【**建议**】null!=compensationList && compensationList.size() > 0，
+
+建议使用org.apache.commons.collections.CollectionUtils.isNotEmpty()
+
+6.【**建议**】equals对比，固定的值放前面，
+
+bad示例：
+
+```java
+dataSource.equals(DataSourceConstant.API);
+```
+
+7.【建议】**double-checked locking使用**
+
+good示例：
+
+```java
+// volatile 
+private volatile LoadingCache cache = null; 
+/ double-checked 
+private LoadingCache getCache() { 	
+	if (null == cache) { 			
+		// synchronized        
+		synchronized (this) {           
+			if (null == cache) { 							
+				// do something 				      
+				cache = initCache();  			
+			} 	
+		}
+	} 
+ }
+```
+
