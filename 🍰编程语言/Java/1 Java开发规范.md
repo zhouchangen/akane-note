@@ -592,11 +592,9 @@ public class Main {
 
 4.**【强制】BigDecimal(double val)不推荐使用，推荐使用BigDecimal(String val)能得到精确的对应值**
 
-5.【**建议**】null!=compensationList && compensationList.size() > 0，
+5.【**建议**】null!=infoList && infoList .size() > 0不推荐使用，建议使用org.apache.commons.collections.CollectionUtils.isNotEmpty()
 
-建议使用org.apache.commons.collections.CollectionUtils.isNotEmpty()
-
-6.【**建议**】equals对比，固定的值放前面，
+6.【**建议**】equals对比，固定的值放前面
 
 bad示例：
 
@@ -604,7 +602,7 @@ bad示例：
 dataSource.equals(DataSourceConstant.API);
 ```
 
-7.【建议】**double-checked locking使用**
+7.【**建议**】**double-checked locking使用**
 
 good示例：
 
@@ -625,3 +623,4 @@ private LoadingCache getCache() {
  }
 ```
 
+8. 【**建议**】关闭流的三种方式：1、try-finally；  2、try-with-resource； 3、@Cleanup

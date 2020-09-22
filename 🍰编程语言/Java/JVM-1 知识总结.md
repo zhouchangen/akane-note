@@ -208,6 +208,8 @@ Eclipse的内存分析器是一种快速，功能丰富的Java堆分析工具，
 
 更多工具见java安装目录下的**/bin/**
 
+例如：jvisualvm、jconsole
+
 **![image.png](images/java28.png)**
 
 

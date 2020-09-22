@@ -56,8 +56,6 @@ public static void main(String[] args) {
 
 
 
-
-
 # ClassPathXmlApplicationContext执行流程
 
 总的执行流程
@@ -99,7 +97,7 @@ public AbstractApplicationContext() {
 
 
 
-**getResourcePatternResolver()**
+### getResourcePatternResolver()
 
 ```java
 protected ResourcePatternResolver getResourcePatternResolver() {
@@ -108,6 +106,45 @@ protected ResourcePatternResolver getResourcePatternResolver() {
 ```
 
 PathMatchingResourcePatternResolver支持Ant风格的路径解析
+
+
+
+### classpath*: 与classpath:
+
+**ApplicationContext**(org.springframework.context)
+
+​	ResourcePatternResolver(org.springframework.core.io.support)
+
+classpath*: 表示能从所有的目录查找，例如能从jar包中加载
+
+classpath: 从当前目录加载
+
+```java
+public interface ResourcePatternResolver extends ResourceLoader {
+
+	/**
+	 * Pseudo URL prefix for all matching resources from the class path: "classpath*:"
+	 * This differs from ResourceLoader's classpath URL prefix in that it
+	 * retrieves all matching resources for a given name (e.g. "/beans.xml"),
+	 * for example in the root of all deployed JAR files.
+	 * @see org.springframework.core.io.ResourceLoader#CLASSPATH_URL_PREFIX
+	 */
+	String CLASSPATH_ALL_URL_PREFIX = "classpath*:";
+
+```
+
+
+
+ResourceLoader
+
+```java
+public interface ResourceLoader {
+
+	/** Pseudo URL prefix for loading from the class path: "classpath:". */
+	String CLASSPATH_URL_PREFIX = ResourceUtils.CLASSPATH_URL_PREFIX;
+```
+
+
 
 
 
@@ -588,7 +625,9 @@ public void refresh() throws BeansException, IllegalStateException {
 
 ### 3.1 进行refresh的准备 prepareRefresh()
 
-refresh前的准备，如设置一下启动时间和属性校验，这里有个initPropertySources()方法，但是默认是空实现，由其子类去实现。
+refresh前的准备，**如设置一下启动时间和属性校验，初始化Environment**
+
+这里有个initPropertySources()方法，但是默认是空实现，由其子类去实现。
 
 ```java
 /**
@@ -611,7 +650,7 @@ refresh前的准备，如设置一下启动时间和属性校验，这里有个i
         }
 
         // Initialize any placeholder property sources in the context environment.
-        // 空方法，由子类实现
+        // 空方法，由子类实现，钩子函数
         initPropertySources();
 
         // Validate that all properties marked as required are resolvable:
@@ -634,8 +673,7 @@ refresh前的准备，如设置一下启动时间和属性校验，这里有个i
     }
 ```
 
-**
-**
+
 
 **getEnvironment().validateRequiredProperties()**
 
@@ -900,10 +938,48 @@ public interface HierarchicalBeanFactory extends BeanFactory {
             beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
         }
         if (this.allowCircularReferences != null) {
-            //默认false，不允许循环引用
+            //默认true，允许循环引用
             beanFactory.setAllowCircularReferences(this.allowCircularReferences);
         }
     }
+
+	/**
+	 * Set whether to allow the raw injection of a bean instance into some other
+	 * bean's property, despite the injected bean eventually getting wrapped
+	 * (for example, through AOP auto-proxying).
+	 * <p>This will only be used as a last resort in case of a circular reference
+	 * that cannot be resolved otherwise: essentially, preferring a raw instance
+	 * getting injected over a failure of the entire bean wiring process.
+	 * <p>Default is "false", as of Spring 2.0. Turn this on to allow for non-wrapped
+	 * raw beans injected into some of your references, which was Spring 1.2's
+	 * (arguably unclean) default behavior.
+	 * <p><b>NOTE:</b> It is generally recommended to not rely on circular references
+	 * between your beans, in particular with auto-proxying involved.
+	 * @see #setAllowCircularReferences
+	 */
+	public void setAllowRawInjectionDespiteWrapping(boolean allowRawInjectionDespiteWrapping) {
+		this.allowRawInjectionDespiteWrapping = allowRawInjectionDespiteWrapping;
+	}
+
+
+    // 得到的是一个半引用，没有完全初始化的，默认是true
+    // 尽量不要循环依赖，而是抽取一个公共的
+	/**
+	 * Set whether to allow circular references between beans - and automatically
+	 * try to resolve them.
+	 * <p>Note that circular reference resolution means that one of the involved beans
+	 * will receive a reference to another bean that is not fully initialized yet.
+	 * This can lead to subtle and not-so-subtle side effects on initialization;
+	 * it does work fine for many scenarios, though.
+	 * <p>Default is "true". Turn this off to throw an exception when encountering
+	 * a circular reference, disallowing them completely.
+	 * <p><b>NOTE:</b> It is generally recommended to not rely on circular references
+	 * between your beans. Refactor your application logic to have the two beans
+	 * involved delegate to a third bean that encapsulates their common logic.
+	 */
+	public void setAllowCircularReferences(boolean allowCircularReferences) {
+		this.allowCircularReferences = allowCircularReferences;
+	}
 ```
 
 
