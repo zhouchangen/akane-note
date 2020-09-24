@@ -324,11 +324,10 @@ repl_backlog_histlen:0
 从机断开，如果使用命令slaveof 127.0.0.1 6379配置的，重启后默认是master。但只要变为从，也能立即从主机中获取数据。
 
 
+
 ### 哨兵模式
 
 自动将从库转换为主库
-
-
 
 步骤一：
 
@@ -421,6 +420,55 @@ D:\Foobar\Redis-x64-3.0.504>redis-server.exe sentinel-26380.conf --sentinel
 ```
 
 
+
+### 集群
+
+尽管可以使用哨兵主从集群实现可用性保证，但是这种实现方式每个节点的数据都是**全量复制**，数据存放量存在着局限性，**受限于内存最小的节点**，因此考虑采用数据**分片**的方式，来实现存储，这个就是redis-cluster。(redis5才开始支持redis-cluster)
+
+https://blog.csdn.net/qq_20597727/article/details/83385737
+
+
+
+步骤一
+
+cluster-6379
+
+```
+cluster-enabled yes
+cluster-node-timeout 15000
+cluster-config-file nodes-6379.conf
+```
+
+cluster-6378
+
+```
+include ./cluster-6379.conf
+port 6380
+pidfile redis-server-6380.pid
+logfile redis-server-6380.log
+dbfilename dump-6380.rdb
+cluster-config-file nodes-6379.conf
+```
+
+
+
+步骤二
+
+```
+redis-server cluster-6379.conf
+redis-server cluster-6380.conf
+redis-server cluster-6381.conf
+redis-server cluster-6382.conf
+redis-server cluster-6383.conf
+redis-server cluster-6384.conf
+
+// 1代表为每个创建的主服务器节点创建一个从服务器节点
+redis-cli --cluster create 127.0.0.1:6379 127.0.0.1:6380 127.0.0.1:6381 127.0.0.1:6382 127.0.0.1:6383--cluster-replicas 1
+
+// cluster info（查看集群信息）、cluster nodes（查看节点列表）
+redis-cli --cluster info 127.0.0.1:6379
+redis-cli --cluster help
+```
 
 
 
