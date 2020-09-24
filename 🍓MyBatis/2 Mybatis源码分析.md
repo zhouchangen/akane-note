@@ -540,10 +540,12 @@ try {
 
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    // 设置标志位，防止并发使用当前查询请求时，前一个请求没完成，后一个请求用了未完成请求的一级缓存
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
+      // 清除标志
       localCache.removeObject(key);
     }
     localCache.putObject(key, list);
