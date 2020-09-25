@@ -8,13 +8,13 @@ https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/inde
 
 
 
-注：本篇文章是阅读[spring-core源码分析](https://github.com/seaswalker/spring-analysis/blob/master/note/Spring.md)的笔记，外接自己的理解和总结，原文写的比较详细和深入，一些个人不了解的地方会跳过。如果是方法，会加上双括号**()**作为和类的命名区分。
+注：本篇文章是阅读[spring-core源码分析](https://github.com/seaswalker/spring-analysis/blob/master/note/Spring.md)及阅读网上博客的笔记，外接自己的理解和总结，原文写的比较详细和深入，一些个人不了解的地方会跳过。如果是方法，会加上双括号**()**作为和类的命名区分。
 
 
 
 # 起步
 
-首先从spring的加载开始，了解其对bean的管理。在这里使用ClassPathXmlApplicationContext的方式启动spring容器，其实也可以通过AnnotationConfigApplicationContext配置类的形式。我们知道Spring是支持注解和xml配置两种形式的。
+首先从spring的加载开始，了解其对bean的管理。在这里使用ClassPathXmlApplicationContext的方式启动spring容器，其实也可以通过AnnotationConfigApplicationContext配置类的形式。我们知道Spring是支持**注解和xml配置**两种形式的。
 
 
 
@@ -115,9 +115,10 @@ PathMatchingResourcePatternResolver支持Ant风格的路径解析
 
 ​	ResourcePatternResolver(org.springframework.core.io.support)
 
-classpath*: 表示能从所有的目录查找，例如能从jar包中加载
+- classpath*: 表示能从所有的目录查找，例如能从jar包中加载
 
-classpath: 从当前目录加载
+- classpath: 从当前目录加载
+
 
 ```java
 public interface ResourcePatternResolver extends ResourceLoader {
@@ -135,7 +136,7 @@ public interface ResourcePatternResolver extends ResourceLoader {
 
 
 
-ResourceLoader
+**ResourceLoader**
 
 ```java
 public interface ResourceLoader {
@@ -143,10 +144,6 @@ public interface ResourceLoader {
 	/** Pseudo URL prefix for loading from the class path: "classpath:". */
 	String CLASSPATH_URL_PREFIX = ResourceUtils.CLASSPATH_URL_PREFIX;
 ```
-
-
-
-
 
 
 
@@ -305,8 +302,6 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 **PropertySources**
 
 PropertySource接口代表了键值对的Property来源
-
-
 
 
 
@@ -625,7 +620,9 @@ public void refresh() throws BeansException, IllegalStateException {
 
 ### 3.1 进行refresh的准备 prepareRefresh()
 
-refresh前的准备，**如设置一下启动时间和属性校验，初始化Environment**
+说明：refresh前的准备，**如设置一下启动时间和属性校验，初始化Environment**
+
+
 
 这里有个initPropertySources()方法，但是默认是空实现，由其子类去实现。
 
@@ -701,7 +698,7 @@ public void validateRequiredProperties() {
 
 **AbstractApplicationContext.obtainFreshBeanFactory()**
 
-这一步开始创建BeanFactory容器，解析xml，加载BeanDefinition并放到容器里的Collection中
+说明：这一步开始创建BeanFactory容器，解析xml或者注解，加载BeanDefinition并放到容器里的Collection中
 
 
 
@@ -758,6 +755,7 @@ ListableBeanFactory
             // 设置serializationId
             beanFactory.setSerializationId(getId());
             customizeBeanFactory(beanFactory);
+            // AnnotationConfigWebApplicationContext和AbstractXmlApplicationContext两种方式
             loadBeanDefinitions(beanFactory);
             synchronized (this.beanFactoryMonitor) {
                 this.beanFactory = beanFactory;
@@ -988,7 +986,12 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 
 **AbstractRefreshableApplicationContext.loadBeanDefinitions()**
 
-解析xml，加载BeanDefinitions到容器里
+
+
+解析xml或注解，加载BeanDefinitions到容器里
+
+- xml：AbstractXmlApplicationContext ——> **XmlBeanDefinitionReader**
+- annotation：AnnotationConfigWebApplicationContext ——> **AnnotatedBeanDefinitionReader**
 
 
 
@@ -1116,7 +1119,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 ### 3.3 prepareBeanFactory()
 
-这一部分是在准备容器，为容器设置一些“特征”，例如SpEL解释器、属性编辑器(用于类型转换)、添加Aware回调、依赖解析忽略、注册环境。
+说明：这一部分是在准备容器，为容器设置一些“特征”，例如SpEL解释器、属性编辑器(用于类型转换)、添加Aware回调、依赖解析忽略、注册环境。
 
 
 
@@ -1195,9 +1198,11 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 ### 3.4 postProcessBeanFactory()
 
-从这一块开始，是放在一个try-catch-finally中。
+说明：此方法允许子类在所有的bean尚未初始化之前**添加BeanPostProcessor**。空实现且没有子类覆盖。
 
-此方法允许子类在所有的bean尚未初始化之前注册**BeanPostProcessor**。空实现且没有子类覆盖。
+
+
+从这一块开始，是放在一个try-catch-finally中。
 
 ```java
 try {
@@ -1206,8 +1211,6 @@ try {
 ```
 
 
-
-### 3.5 invokeBeanFactoryPostProcessors()
 
 BeanFactoryPostProcessor接口允许我们在bean正是初始化之前改变其值。此接口只有一个方法:
 
@@ -1224,6 +1227,40 @@ void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory);
 - 通过xml配置的方式:
 
 > <bean class="base.SimpleBeanFactoryPostProcessor" />
+
+
+
+### 3.5 invokeBeanFactoryPostProcessors()
+
+说明：调用BeanFactoryPostProcessor的postProcessBeanFactory()方法
+
+
+
+```java
+/**
+ * Instantiate and invoke all registered BeanFactoryPostProcessor beans,
+ * respecting explicit order if given.
+ * <p>Must be called before singleton instantiation.
+ */
+protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+	PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
+
+	// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime
+	// (e.g. through an @Bean method registered by ConfigurationClassPostProcessor)
+	if (beanFactory.getTempClassLoader() == null && beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
+		beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
+		beanFactory.setTempClassLoader(new ContextTypeMatchClassLoader(beanFactory.getBeanClassLoader()));
+	}
+}
+
+
+
+	public static void invokeBeanFactoryPostProcessors(
+        	// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
+			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
+```
+
 
 注意此时尚未进行bean的初始化工作，初始化是在后面的finishBeanFactoryInitialization进行的，所以在BeanFactoryPostProcessor对象中获取bean会导致提前初始化。
 
@@ -1248,11 +1285,32 @@ getBeanFactoryPostProcessors获取的就是AbstractApplicationContext的成员be
 
 ### 3.6 BeanPostProcessors注册 registerBeanPostProcessors()
 
+说明：注册BeanPostProcessors到BeanFactory
+
+
+
+```java
+/**
+ * Register the given BeanPostProcessor beans.
+ */
+private static void registerBeanPostProcessors(
+      ConfigurableListableBeanFactory beanFactory, List<BeanPostProcessor> postProcessors) {
+
+   for (BeanPostProcessor postProcessor : postProcessors) {
+      beanFactory.addBeanPostProcessor(postProcessor);
+   }
+}
+```
+
+
+
 此部分实质上是在BeanDefinitions中寻找BeanPostProcessor，之后调用BeanFactory.addBeanPostProcessor方法保存在一个List中，注意添加时仍然有优先级的概念，优先级高的在前面。
 
 
 
-### 3.7 初始化国际化 initMessageSource()
+### 3.7 初始化信息源 initMessageSource()
+
+说明：初始化信息源
 
 
 
@@ -1359,11 +1417,13 @@ public class TranslationSource extends ResourceBundleMessageSource {
 
 
 
-### 3.8 初始化事件驱动 initApplicationEventMulticaster()
+### 3.8 初始化事件广播器 initApplicationEventMulticaster()
 
-初始化事件驱动，事件发布者。
+说明：初始化事件广播器，事件发布者。
 
-事件驱动，类似于我们常说的观察者模式。
+
+
+事件驱动，类似于我们常说的**观察者**模式。
 
 ```java
     /**
@@ -1453,11 +1513,15 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 ### 3.9 onRefresh()
 
-允许子类在进行bean初始化之前进行一些定制操作。默认空实现。
+说明：允许子类在进行bean初始化之前进行一些定制操作。默认空实现，钩子函数。
 
 
 
 ### 3.10 ApplicationListener注册 registerListeners()
+
+说明：注册监听器
+
+
 
 在initApplicationEventMulticaster()只是初始化事件驱动，在这里接着就是注册监听器了。
 
@@ -1501,6 +1565,10 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 
 ### 3.11 finishBeanFactoryInitialization()
+
+根据Bean'Definition实例化所有非延迟加载的Bean
+
+
 
 上面，仅仅是设置容器，我们定义的Bean并没有开始注入，这里要理解BeanDefinition，用于描述Bean的实例，有了BeanDefinition我们就可以对Bean进行各种调整改造，而如果是简单的创建一个Obeject对象，我们很难对其扩展。
 
@@ -1817,7 +1885,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
             }
 
             // Check if bean definition exists in this factory.
-            // 3. 如果父容器存在并且存在此bean定义，那么交由其父容器初始化
+            // 3. 如果父容器存在并且存在此bean定义，那么交由其父容器初始化,类似类加载的双亲委派机制
             BeanFactory parentBeanFactory = getParentBeanFactory();
             if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
                 // Not found -> check parent.
@@ -1846,6 +1914,7 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
             }
 
             try {
+                // 获取BeanDefinition
                 final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
                 checkMergedBeanDefinition(mbd, beanName, args);
 
@@ -2069,10 +2138,12 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
     protected Object getSingleton(String beanName, boolean allowEarlyReference) {
         // 1.从一级缓存中取
         Object singletonObject = this.singletonObjects.get(beanName);
-        if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+        // 如果获取不到，则判断Bean是否已经在创建isSingletonCurrentlyInCreation，这里涉及到并发处理逻辑，后续讲解
+        if (singletonObject == null && isSingletonCurrentlyInCreation，(beanName)) {
             synchronized (this.singletonObjects) {
                 // 从二级缓存中取
                 singletonObject = this.earlySingletonObjects.get(beanName);
+                // allowEarlyReference是否需要创建EarlyReference
                 if (singletonObject == null && allowEarlyReference) {
                     // 二级缓存没有，从三级缓存取
                     ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
@@ -2087,6 +2158,145 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
         }
         return singletonObject;
     }
+```
+
+
+
+#### AbstractBeanFactory.getObjectForBeanInstance()
+
+如果从Object sharedInstance = getSingleton(beanName);获取到shareInstance，但是并不是直接返回
+
+
+
+```java
+/**
+ * Get the object for the given bean instance, either the bean
+ * instance itself or its created object in case of a FactoryBean.
+ * @param beanInstance the shared bean instance
+ * @param name name that may include factory dereference prefix
+ * @param beanName the canonical bean name
+ * @param mbd the merged bean definition
+ * @return the object to expose for the bean
+ */
+protected Object getObjectForBeanInstance(
+      Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
+
+   // Don't let calling code try to dereference the factory if the bean isn't a factory.
+    // 如果使用&为前缀表明想获取的是FactoryBean，则直接返回
+    // 源码: (name != null && name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX))
+   if (BeanFactoryUtils.isFactoryDereference(name)) {
+      if (beanInstance instanceof NullBean) {
+         return beanInstance;
+      }
+      if (!(beanInstance instanceof FactoryBean)) {
+         throw new BeanIsNotAFactoryException(beanName, beanInstance.getClass());
+      }
+      if (mbd != null) {
+         mbd.isFactoryBean = true;
+      }
+      return beanInstance;
+   }
+
+   // Now we have the bean instance, which may be a normal bean or a FactoryBean.
+   // If it's a FactoryBean, we use it to create a bean instance, unless the
+   // caller actually wants a reference to the factory.
+    // 不是FactoryBean，则直接返回
+   if (!(beanInstance instanceof FactoryBean)) {
+      return beanInstance;
+   }
+
+   Object object = null;
+   if (mbd != null) {
+      mbd.isFactoryBean = true;
+   }
+   else {
+       // 从缓存中获取
+      object = getCachedObjectForFactoryBean(beanName);
+   }
+   if (object == null) {
+      // Return bean instance from factory.
+      FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
+      // Caches object obtained from FactoryBean if it is a singleton.
+      if (mbd == null && containsBeanDefinition(beanName)) {
+         mbd = getMergedLocalBeanDefinition(beanName);
+      }
+      boolean synthetic = (mbd != null && mbd.isSynthetic());
+       // 通过FactoryBean获取返回的示例，getObject()
+      object = getObjectFromFactoryBean(factory, beanName, !synthetic);
+   }
+   return object;
+}
+```
+
+
+
+#### getObjectFromFactoryBean
+
+```java
+/**
+ * Obtain an object to expose from the given FactoryBean.
+ * @param factory the FactoryBean instance
+ * @param beanName the name of the bean
+ * @param shouldPostProcess whether the bean is subject to post-processing
+ * @return the object obtained from the FactoryBean
+ * @throws BeanCreationException if FactoryBean object creation failed
+ * @see org.springframework.beans.factory.FactoryBean#getObject()
+ */
+protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
+   if (factory.isSingleton() && containsSingleton(beanName)) {
+       // lock singletonObjects
+      synchronized (getSingletonMutex()) {
+          // 从缓存中获取
+         Object object = this.factoryBeanObjectCache.get(beanName);
+         if (object == null) {
+             // 从FactoryBean中获取，getObject()
+            object = doGetObjectFromFactoryBean(factory, beanName);
+            // Only post-process and store if not put there already during getObject() call above
+            // (e.g. because of circular reference processing triggered by custom getBean calls)
+            // 从缓存中获取，这里在对比一次，防止循环依赖的时候获取
+            Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
+            if (alreadyThere != null) {
+               object = alreadyThere;
+            }
+            else {
+               if (shouldPostProcess) {
+                  if (isSingletonCurrentlyInCreation(beanName)) {
+                     // Temporarily return non-post-processed object, not storing it yet..
+                     return object;
+                  }
+                  beforeSingletonCreation(beanName);
+                  try {
+                     object = postProcessObjectFromFactoryBean(object, beanName);
+                  }
+                  catch (Throwable ex) {
+                     throw new BeanCreationException(beanName,
+                           "Post-processing of FactoryBean's singleton object failed", ex);
+                  }
+                  finally {
+                     afterSingletonCreation(beanName);
+                  }
+               }
+               if (containsSingleton(beanName)) {
+                  this.factoryBeanObjectCache.put(beanName, object);
+               }
+            }
+         }
+         return object;
+      }
+   }
+   else {
+      Object object = doGetObjectFromFactoryBean(factory, beanName);
+      if (shouldPostProcess) {
+         try {
+            object = postProcessObjectFromFactoryBean(object, beanName);
+         }
+         catch (Throwable ex) {
+            throw new BeanCreationException(beanName, "Post-processing of FactoryBean's object failed", ex);
+         }
+      }
+      return object;
+   }
+}
 ```
 
 
