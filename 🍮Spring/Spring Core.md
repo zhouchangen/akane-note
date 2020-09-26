@@ -8,7 +8,7 @@ https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/inde
 
 
 
-注：本篇文章是阅读[spring-core源码分析](https://github.com/seaswalker/spring-analysis/blob/master/note/Spring.md)及阅读网上博客的笔记，外接自己的理解和总结，原文写的比较详细和深入，一些个人不了解的地方会跳过。如果是方法，会加上双括号**()**作为和类的命名区分。
+注：本篇文章是阅读[spring-core源码分析](https://github.com/seaswalker/spring-analysis/blob/master/note/Spring.md)、[嘎嘎的博客](https://blog.csdn.net/qq_20597727)及阅读网上博客的笔记，外接自己的理解和总结，原文写的比较详细和深入，一些个人不了解的地方会跳过。如果是方法，会加上双括号**()**作为和类的命名区分。
 
 
 
@@ -686,7 +686,7 @@ public void refresh() throws BeansException, IllegalStateException {
 
 **getEnvironment().validateRequiredProperties()**
 
-requiredProperties默认是空的，也就是不需要校验任何属性
+requiredProperties默认是空的，也就是不需要校验任何属性。然后这里调用getEnvironment会初始化Enviroment
 
 ```java
 private final Set<String> requiredProperties = new LinkedHashSet<>();
@@ -1085,8 +1085,6 @@ org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#doRegi
 
 
 
-
-
 **ant 风格**
 
 | 通配符 | 说明                    |
@@ -1100,6 +1098,8 @@ org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#doRegi
 
 
 ### BeanDefinition 
+
+用于描述Bean的信息
 
 ```java
 /**
@@ -1140,8 +1140,6 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 **ResourceEditorRegistrar**： 属性编辑器。在编写xml配置时，我们设置的值都是字符串形式，所以在使用时肯定需要转为我们需要的类型。
 
 **loadTimeWeaver**: 待了解
-
-
 
 
 
@@ -1401,8 +1399,6 @@ ApplicationContext (org.springframework.context)
 
 
 
-
-
 **自定义国际化**
 
 ```java
@@ -1505,7 +1501,7 @@ public class ContentEvent extends ApplicationEvent {
 
 ```java
 @Component
-public class MyListener implements ApplicationListener<ContentEvent> {  // ContentEvent通过泛型注入
+public class MyListener implements ApplicationListener<ContentEvent> {  // ContentEvent，可以通过泛型注入
     @Override  
     public void onApplicationEvent(final ContentEvent event) {  
         System.out.println("msg：" + event.getSource());  
@@ -1634,7 +1630,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 #### 3.11.1 preInstantiateSingletons()
 
-初始化Bean
+说明：初始化Bean
 
 ```java
     @Override
@@ -1824,7 +1820,9 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 
 
-第二个参数表示bean的Class类型，第三个表示创建bean需要的参数，最后一个表示不需要进行类型检查。
+- 第二个参数requiredType：表示bean的Class类型
+- 第三个参数args：表示创建bean需要的参数
+- 最后一个参数typeCheckOnly：表示不需要进行类型检查
 
 ```java
     public Object getBean(String name) throws BeansException {
@@ -1839,10 +1837,10 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 这一部分篇幅比较长，因此单独新起一段来说。在这里先简单了解一个大体的流程：
 
 1. 将FactoryBean的前缀&去掉，并且将别名aliasName转为真实的名字
-2. Spring其实一开始会手动注册一些单例Bean，如初始化资源时。检测是不是Spring手动注册的Bean，如果是，再检测是不是FactoryBean，如果是返回工厂返回的实例getObject，否则返回Bean本身。
+2. Spring其实一开始会手动注册一些单例Bean，如初始化资源时。检测是不是Spring手动注册的Bean，如果是，再检测是不是FactoryBean，如果是返回工厂返回的实例getObject，否则返回Bean本身
 3. 如果父类容器存在并且定义了该Bean，则调用父类的doGetBean初始化
 4. 第2步骤的else，如果是我们自定义的Bean，是否是依赖了其它Bean(@DependsOn)，依赖了会优先加载
-5. 初始化singleton Bean，如果存在直接返回，否则初始化。
+5. 初始化singleton Bean，如果存在直接返回，否则初始化
 6. 初始化prototype Bean，在这里我们只研究单例Bean
 7. 初始化其它作用域的Bean，例如web的session，request等
 8. 检测所需的类型是否和实际Bean类型匹配，这里requiredType传进来是null，因此不会走到这里
@@ -2129,7 +2127,8 @@ if (sharedInstance != null && args == null) {
 
 
 
-参数一BeanName，参数二是否要创建**EarlyReference**
+- 参数一BeanName：表示Bean的名称
+- 参数二allowEarlyReference：表示是否要创建**EarlyReference**，这里为**true**
 
 ```java
     public Object getSingleton(String beanName) {
@@ -2158,7 +2157,7 @@ if (sharedInstance != null && args == null) {
     protected Object getSingleton(String beanName, boolean allowEarlyReference) {
         // 1.从一级缓存中取
         Object singletonObject = this.singletonObjects.get(beanName);
-        // 如果获取不到，则判断Bean是否已经在创建isSingletonCurrentlyInCreation，这里涉及到并发处理逻辑，后续讲解
+        // 如果获取不到，则判断Bean是否已经在创建isSingletonCurrentlyInCreation，这里涉及到并发处理逻辑
         if (singletonObject == null && isSingletonCurrentlyInCreation，(beanName)) {
             synchronized (this.singletonObjects) {
                 // 从二级缓存中取
@@ -2168,7 +2167,7 @@ if (sharedInstance != null && args == null) {
                     // 二级缓存没有，从三级缓存取
                     ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
                     if (singletonFactory != null) {
-                        // 三级缓存取成功，则放入到二级缓存中，移除三级缓存对应的beanName
+                        // 三级缓存获取成功，则放入到二级缓存中，移除三级缓存对应的beanName
                         singletonObject = singletonFactory.getObject();
                         this.earlySingletonObjects.put(beanName, singletonObject);
                         this.singletonFactories.remove(beanName);
@@ -2180,13 +2179,17 @@ if (sharedInstance != null && args == null) {
     }
 ```
 
+这里有意思的是，**如果allowEarlyReference为true**，并且从二级缓存中获取不到，则会到三级缓存中获取。
+
+三级缓存获取成功，则放入到二级缓存中，移除三级缓存对应的beanName
+
 
 
 ### 三级缓存
 
-三级缓存指的是对Bean的缓存，其实在前面我们也可以看到其实Spring中用了很多Map做为缓存，如：beanDefinitionMap、beanDefinitionNames、dependentBeanMap等
+俗称的三级缓存指的是对Bean的缓存，其实在前面我们也可以看到其实Spring中用了很多Map做为缓存，如：beanDefinitionMap、beanDefinitionNames、dependentBeanMap等
 
-- **一级缓存singletonObjects**: 缓存单例Bean，也就是经历了完整的生命周期的Bean
+- **一级缓存singletonObjects**: 缓存单例Bean，也就是经历了完整的**生命周期**的Bean
 - **二级缓存earlySingletonObjects**:  缓存早期(early)的Bean，也就是**未完成生命周期**的Bean
 - **三级缓存singletonFactories**: 缓存ObjectFactory，对象的工厂
 
@@ -2260,6 +2263,8 @@ protected Object getObjectForBeanInstance(
 
 #### getObjectFromFactoryBean
 
+通过FactoryBean获取生产出来的Bean实例，getObject()方法
+
 ```java
 /**
  * Obtain an object to expose from the given FactoryBean.
@@ -2281,7 +2286,8 @@ protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanNam
             object = doGetObjectFromFactoryBean(factory, beanName);
             // Only post-process and store if not put there already during getObject() call above
             // (e.g. because of circular reference processing triggered by custom getBean calls)
-            // 从缓存中获取，这里在对比一次。用于处理循环依赖问题
+            // 从缓存中获取，这里在对比一次。
+            // 猜测：是当循环依赖的时候，Bean的生命周期可能会返回自定的Bean，如BeanPostProcessors。(若知道的读者可以pr给我)
             Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
             if (alreadyThere != null) {
                object = alreadyThere;
@@ -2331,7 +2337,7 @@ protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanNam
 
 ## 单例Bean创建
 
-在这里是获取而不是创建，如果是非Spring手动注入的Bean，那么第一次肯定获取返回的是null，就会走创建的逻辑。这里我们关注的单例Bean的创建。
+在这里是获取而不是创建，如果是非Spring手动注入的Bean，那么第一次肯定获取返回的是null，就会走创建的逻辑。这里我们关注的是单例Bean的创建。
 
 ```java
 // Create bean instance.
@@ -2356,7 +2362,7 @@ if (mbd.isSingleton()) {
 
 ### DefaultSingletonBeanRegistry.getSingleton()
 
-通过指定名称，返回一个单例Bean，**如果不存在则进行创建**
+通过指定名称，返回一个单例Bean，**如果不存在则进行创建**。这里要区分 getSingleton(String beanName, boolean allowEarlyReference)
 
 ```java
 /**
@@ -3182,5 +3188,6 @@ public User getUser(){
 
    
 
-   
+   ### finishRefresh
 
+并发容器的生命周期事件
