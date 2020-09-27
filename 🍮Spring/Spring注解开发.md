@@ -136,7 +136,7 @@ public interface BeanFactory {
 
 方法三
 JSR250
- @PostConstruct: 在Bean创建完成并且属性赋值完成，来执行初始化方法
+@PostConstruct: 在Bean创建完成并且属性赋值完成，来执行初始化方法
 @PreDestroy：在容器销毁Bean之前，通知我们进行清理工作
 构造方法 -> @PostConstruct -> @PreDestroy
     

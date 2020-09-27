@@ -45,6 +45,10 @@ org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
 
 该类继承了ImportBeanDefinitionRegistrar，这里的ImportBeanDefinitionRegistrar用于将配置类上的BeanDefinition注册到容器中。
 
+> 通过Import注解可以注册bean，虽然它也支持同时注册多个bean，但是不方便，特别是当我们想通过实现一些复杂逻辑来注册bean的话，仅仅通过Import注解是不方便的，这时就可以使用ImportBeanDefinitionRegistrar这个接口来动态的注册bean了，我这里说的注册bean指的是：**通过生成BeanDefinition，并且把BeanDefinition放入BeanFactory中。**
+
+
+
 这里主要分两个过程：
 
 1. 首先获取包的扫描路径
