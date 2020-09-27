@@ -944,7 +944,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
      */
     protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
         if (this.allowBeanDefinitionOverriding != null) {
-            //默认false，不允许覆盖
+            //默认true，允许覆盖
             beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
         }
         if (this.allowCircularReferences != null) {
@@ -954,21 +954,14 @@ public interface HierarchicalBeanFactory extends BeanFactory {
     }
 
 	/**
-	 * Set whether to allow the raw injection of a bean instance into some other
-	 * bean's property, despite the injected bean eventually getting wrapped
-	 * (for example, through AOP auto-proxying).
-	 * <p>This will only be used as a last resort in case of a circular reference
-	 * that cannot be resolved otherwise: essentially, preferring a raw instance
-	 * getting injected over a failure of the entire bean wiring process.
-	 * <p>Default is "false", as of Spring 2.0. Turn this on to allow for non-wrapped
-	 * raw beans injected into some of your references, which was Spring 1.2's
-	 * (arguably unclean) default behavior.
-	 * <p><b>NOTE:</b> It is generally recommended to not rely on circular references
-	 * between your beans, in particular with auto-proxying involved.
-	 * @see #setAllowCircularReferences
+	 * Set whether it should be allowed to override bean definitions by registering
+	 * a different definition with the same name, automatically replacing the former.
+	 * If not, an exception will be thrown. This also applies to overriding aliases.
+	 * <p>Default is "true".
+	 * @see #registerBeanDefinition
 	 */
-	public void setAllowRawInjectionDespiteWrapping(boolean allowRawInjectionDespiteWrapping) {
-		this.allowRawInjectionDespiteWrapping = allowRawInjectionDespiteWrapping;
+	public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding) {
+		this.allowBeanDefinitionOverriding = allowBeanDefinitionOverriding;
 	}
 
 
