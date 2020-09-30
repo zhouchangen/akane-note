@@ -14,13 +14,15 @@ https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/inde
 
 # 准备
 
-建议：在阅读源码的时候，可以看看源码的注释，理解英文的概念，光看网上的翻译文章，容器造成误解
+建议：在阅读源码的时候，可以看看源码的注释，理解英文的概念，光看网上的翻译文章，容器造成误解。
 
 
 
 单词说明
 
-postProcess：理解为回调，后置处理器的意思
+postProcessor：后置处理器
+
+Aware：回调
 
 
 
@@ -925,7 +927,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 
 #### BeanFactory定制
 
-**AbstractRefreshableApplicationContext.customizeBeanFactory()**给子类提供一个自由配置的机会
+**AbstractRefreshableApplicationContext.customizeBeanFactory()**给子类提供一个自由配置的机会，例如我们在这里就开始进行设置是否进行循环依赖
 
 ```java
 /**
@@ -965,7 +967,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 	}
 
 
-    // 得到的是一个半引用，没有完全初始化的，默认是true
+    // 得到的是一个半引用(未完成生命周期)，默认是true
     // 尽量不要循环依赖，而是抽取一个公共的
 	/**
 	 * Set whether to allow circular references between beans - and automatically
@@ -1092,7 +1094,7 @@ org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#doRegi
 
 ### BeanDefinition 
 
-用于描述Bean的信息
+用于描述Bean的信息，因为Spring 的Bean并不是简单的对象，而是包含了很多信息，比如scope作用域， 是否需要懒加载，是否有依赖DependsOn等等。BeanDefinition可以理解为Spring对对象进行的一层封装，用于描述Bean的信息。
 
 ```java
 /**
@@ -1510,6 +1512,7 @@ MESSAGE_SOURCE_BEAN_NAME = messageSource
 ```java
 protected void initMessageSource() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        // 如果配置了改Bean，MESSAGE_SOURCE_BEAN_NAME = messageSource
         if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
             this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
             // Make MessageSource aware of parent MessageSource.
@@ -1544,9 +1547,8 @@ protected void initMessageSource() {
 
 **MessageSource 国际化资源获取**
 
-**ResourceBundleMessageSource**
-
-**ReloadableResourceBundleMessageSource 刷新资源**
+- **ResourceBundleMessageSource**
+- **ReloadableResourceBundleMessageSource 刷新资源**
 
 
 
@@ -1821,6 +1823,8 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
          * 实例化所有非懒加载的单例Bean
          */
         for (String beanName : beanNames) {
+            // RootBeanDefinition继承AbstractBeanDefinition，而AbstractBeanDefinition实现了BeanDefinition
+            // 在这里AbstractBeanDefinition就相应提供了一个默认的抽象的BeanDefinition，而RootBeanDefinition则是扩展
             RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
            
             if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
@@ -1845,6 +1849,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
                     }
                 }
                 else {
+                    // 普通Bean获取
                     getBean(beanName);
                 }
             }
@@ -2274,7 +2279,9 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 
 
-## 获取Spring手动注册的Bean
+## 获取Spring中的Bean
+
+首先会从容器缓存中获取，你可能会想第一次创建的时候肯定是在缓存中获取不到的。那为什么一开始还是从缓存中获取呢。第一个原因是：Spring其实一开始是会手动注册一些Bean到容器中，第二个原因是：用于解决循环依赖问题（具体分析将Spring循环依赖一章笔记）
 
 ```java
 Object sharedInstance = getSingleton(beanName);
@@ -2294,11 +2301,31 @@ if (sharedInstance != null && args == null) {
 
 
 
+## 三级缓存和Bean概念
+
+在说getSingleton方法之前，先解释一下网上俗称的Spring三级缓存。
+
+
+
+Spring三级缓存指的是Spring对**对象或Bean**的三个缓存，其实在前面我们也可以看到其实Spring中用了很多Map做为缓存，如：beanDefinitionMap、beanDefinitionNames、dependentBeanMap等。
+
+注：另外二级三级网上的有些说法可能是说反的，比如有人觉得你说的二级缓存是他说的三级缓存，这个存疑，后续如有机会查看官方是否有明确说明。总之，理解这三个map的作用即可，不用太在乎所谓的一二三级。
+
+
+
+- **一级缓存singletonObjects**: 缓存单例Bean，也就是经历了完整的**生命周期**的Bean
+- **二级缓存earlySingletonObjects**:  缓存早期(early)的Bean，也就是**未完成生命周期**的Bean
+- **三级缓存singletonFactories**: 缓存ObjectFactory，对象的工厂
+
+
+
+需要注意的是，Spring中的Bean并不是指简单的Java对象，而是指经历过一系列生命周期的Bean，最后完成添加到**一级缓存singletonObjects**，这样的对象你可以理解为才是Spring的Bean。
+
+
+
 ### getSingleton(beanName) -> getSingleton(String beanName, boolean allowEarlyReference) 
 
 获取单例Bean，注意这个getSingleton其实重载了好几个方法。
-
-
 
 - 参数一BeanName：表示Bean的名称
 - 参数二allowEarlyReference：表示是否要创建**EarlyReference**，这里为**true**
@@ -2354,17 +2381,9 @@ if (sharedInstance != null && args == null) {
 
 这里有意思的是，**如果allowEarlyReference为true**，并且从二级缓存中获取不到，则会到三级缓存中获取。
 
-三级缓存获取成功，则放入到二级缓存中，移除三级缓存对应的beanName
+三级缓存获取成功，则放入到二级缓存中，移除三级缓存对应的beanName。
 
-
-
-### 三级缓存
-
-俗称的三级缓存指的是对Bean的缓存，其实在前面我们也可以看到其实Spring中用了很多Map做为缓存，如：beanDefinitionMap、beanDefinitionNames、dependentBeanMap等
-
-- **一级缓存singletonObjects**: 缓存单例Bean，也就是经历了完整的**生命周期**的Bean
-- **二级缓存earlySingletonObjects**:  缓存早期(early)的Bean，也就是**未完成生命周期**的Bean
-- **三级缓存singletonFactories**: 缓存ObjectFactory，对象的工厂
+注：这里的设计其实是对循环依赖时候做的缓存，下一次在调用的时候直接从二级中获取，不用再调用singletonFactory.getObject();减少性能消耗，这里简单了解即可，在Spring循环依赖一章笔记中会详细举例说明。
 
 
 
@@ -2591,7 +2610,7 @@ public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
             throw ex;
          }
          finally {
-            // 赋值为null，GC
+            // 赋值为null，help GC
             if (recordSuppressedExceptions) {
                this.suppressedExceptions = null;
             }
@@ -3070,9 +3089,13 @@ if (beanType != NullBean.class) {
 
 ### populateBean
 
-1. 填充属性
-
+1. 填充属性，例如@Resource和@Autowired就是在这里通过后置处理器进行处理。
 2. 依赖处理
+
+
+
+- AutowiredAnnotationBeanPostProcessor @Autowired
+- CommonAnnotationBeanPostProcessor @Resource
 
 ```java
 /**
@@ -3137,12 +3160,16 @@ protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable B
       for (BeanPostProcessor bp : getBeanPostProcessors()) {
          if (bp instanceof InstantiationAwareBeanPostProcessor) {
             InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+            // BeanPostProcessor
+            // AutowiredAnnotationBeanPostProcessor @Autowired
+			// CommonAnnotationBeanPostProcessor @Resource
             PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
             if (pvsToUse == null) {
                if (filteredPds == null) {
                   filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
                }
                 // InstantiationAwareBeanPostProcessor属性处理，为成员变量赋值
+                //  关于 @Autowired自动注入的原理其实就在这里
                pvsToUse = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
                if (pvsToUse == null) {
                   return;
@@ -3257,7 +3284,7 @@ private void invokeAwareMethods(final String beanName, final Object bean) {
 
 
 
-#### BeanPostProcessor
+#### BeanPostProcessor.applyBeanPostProcessorsBeforeInitialization()
 
 如果实现了这个BeanPostProcessor，就会去调用相应的方法postProcessBeforeInitialization和postProcessAfterInitialization，类似于Aware。例如： @PostConstruct与@PreDestroy，**在这里分析@PostConstruct的原理。**
 
@@ -3345,7 +3372,8 @@ public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, S
  * annotations in the {@code javax.annotation} package. These common Java
  * annotations are supported in many Java EE 5 technologies (e.g. JSF 1.2),
  * as well as in Java 6's JAX-WS.
- *
+ * 
+ * 注：这一段便说明了@PostConstruct的实现在InitDestroyAnnotationBeanPostProcessor
  * <p>This post-processor includes support for the {@link javax.annotation.PostConstruct}
  * and {@link javax.annotation.PreDestroy} annotations - as init annotation
  * and destroy annotation, respectively - through inheriting from
@@ -3636,7 +3664,43 @@ public User getUser(){
 }
 ```
 
-@PreDestroy原理同，DestructionAwareBeanPostProcessor
+destrodeyMethod原理同，DestructionAwareBeanPostProcessor
+
+
+
+#### BeanPostProcessor.applyBeanPostProcessorsAfterInitialization()
+
+例如：AnnotationAwareAspectJAutoProxyCreator 就是完成AOP代理的，这里详细见Spring AOP一章笔记
+
+```java
+	@Override
+	public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
+			throws BeansException {
+
+		Object result = existingBean;
+		for (BeanPostProcessor processor : getBeanPostProcessors()) {
+			Object current = processor.postProcessAfterInitialization(result, beanName);
+			if (current == null) {
+				return result;
+			}
+			result = current;
+		}
+		return result;
+	}
+
+
+// -----------------------------------------------------------------------------
+	@Override
+	public Object postProcessAfterInitialization(@Nullable Object bean, String beanName) {
+		if (bean != null) {
+			Object cacheKey = getCacheKey(bean.getClass(), beanName);
+			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
+				return wrapIfNecessary(bean, beanName, cacheKey);
+			}
+		}
+		return bean;
+	}
+```
 
 
 
@@ -3663,25 +3727,6 @@ Constructor > @PostConstruct > InitializingBean > initMethod > DisposableBean > 
 5. BeanPostProcessors afterInitilaz
 6. DisposableBean
 7. destroy-method
-
-
-
-## Spring循环依赖问题
-
-循环依赖，简单来说，就是A依赖B，B依赖A。但是如果是简单对象，循环依赖问题是不存在的，很容易解决。
-
-```java
-A a = new A();
-B b = new B();
-a.b = b;
-b.a = a;
-```
-
-但是Spring中的Bean并不是简单的对象，而是经历了一系列生命周期的Bean，正是因为Bean的生命周期所以Spring才会出现循环依赖问题。
-
-
-
-
 
 
 
@@ -3715,3 +3760,5 @@ protected void finishRefresh() {
    LiveBeansView.registerApplicationContext(this);
 }
 ```
+
+
