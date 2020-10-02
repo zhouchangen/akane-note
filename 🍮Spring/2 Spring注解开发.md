@@ -64,13 +64,21 @@ ComponentScans
 
 
 
+## 优先级、顺序
+
+```
+@Order
+```
+
+
+
 
 
 ## 懒加载
 
 懒加载：容器启动时不创建对象，而是在第一次(获取)Bean创建对象，并初始化。
 
-```
+```java
 @Lazy
 延迟加载
 ```
@@ -511,3 +519,30 @@ Callable<String> async()
 
 new DeferredResult()
 ```
+
+
+
+## SpringMVC
+
+```java
+@Controller
+@RestController
+@RequestMapping
+@GetMapping
+@PostMapping
+@xxxMapping
+
+Modle
+ModleMap
+@RequestParam
+@RequestBody
+@PathVariable
+@ModelAttribute
+
+@ResponseBody
+```
+
+
+
+更多注解，可以在IDEA中输入@然后查看
+
