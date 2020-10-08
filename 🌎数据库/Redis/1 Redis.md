@@ -536,3 +536,9 @@ public class RedisTemplate<K, V> extends RedisAccessor implements RedisOperation
         this.defaultSerializer = new JdkSerializationRedisSerializer(this.classLoader != null ? this.classLoader : this.getClass().getClassLoader());
     }
 ```
+
+
+
+## 7 生成自增的序列
+
+以id+日期作为key，设置自增，这样就可以每天从0开始生成自增的序列了
