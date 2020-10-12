@@ -1,8 +1,12 @@
 # Spring注解开发
 
+对Spring常用注解的整理，推荐阅读[尚硅谷Spring注解驱动教程](https://www.bilibili.com/video/BV1gW411W7wy)，阅读之前最好有一定的Spring源码基础，如知道Spring的BeanFactory、BeanDefinition、Aware、PostProcessor、Bean的生命周期等概念。
+
+
+
 ## 注入
 
-```
+```java
 @Bean
 给容器中注册一个Bean，类型为返回值的类型，id默认是方法名作为id
 
@@ -33,8 +37,6 @@ public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
 
 
 
-
-
 ## 扫描
 
 ```
@@ -49,7 +51,7 @@ ComponentScans
 
 ## 作用域
 
-```
+```java
 @Scope("prototype")
 /*
 * @see ConfigurableBeanFactory#SCOPE_PROTOTYPE 多实例，原型。 IOC容器启动时并不是直接创建对象放进容器里，而是在获取Bean的时候才会创建放进容器
@@ -62,13 +64,21 @@ ComponentScans
 
 
 
+## 优先级、顺序
+
+```
+@Order
+```
+
+
+
 
 
 ## 懒加载
 
 懒加载：容器启动时不创建对象，而是在第一次(获取)Bean创建对象，并初始化。
 
-```
+```java
 @Lazy
 延迟加载
 ```
@@ -77,7 +87,7 @@ ComponentScans
 
 ## 条件
 
-```
+```java
 @Conditional({WindowsCondition.class})
 虚拟机环境变量设置：-Dos.name=linux
 
@@ -91,18 +101,18 @@ ComponentScans
 
 ## 导入
 
-```
+```java
 之前是：@Configuration + @Bean + @ComponentScan
 但如果是第三方的包没有这些注解，可以使用@Import
 @Import(AnnotationBeanDefinitionDemo.Config.class)
-导入组件，容器中机会自动注册这个组件，id默认是类的全类名。
+导入组件，容器中就会自动注册这个组件，id默认是类的全类名。
 
 org.springframework.context.annotation.ImportSelector 返回需要导入的组件的全类名数组
 org.springframework.context.annotation.ImportBeanDefinitionRegistrar 手动注册Bean到容器中
 
 BeanFactory 和FactoryBean
 1. FactoryBean默认获取的是工厂Bean调用getObject创建的对象
-2. 要获取工厂Bean本身，需要在id前面加一个&
+2. 要获取工厂Bean本身，需要在id前面加一个&，表明想获取的FActoryBean
 3. 补充： BeanFactory是底层容器，FactoryBean是用于创建Bean的工厂
 public class MyFactoryBean implements org.springframework.beans.factory.FactoryBean<T>{}
 
@@ -121,7 +131,9 @@ public interface BeanFactory {
 
 ## Bean的生命周期
 
-```
+执行顺序@PostConstruct > InitializingBean > initMethod，关于原理在Spring Core一章笔记中有说明
+
+```java
 指定初始化(构造方法调用后，调用初始化方法)和销毁方法：
 
 方法一
@@ -136,20 +148,24 @@ public interface BeanFactory {
 
 方法三
 JSR250
- @PostConstruct: 在Bean创建完成并且属性赋值完成，来执行初始化方法
+@PostConstruct: 在Bean创建完成并且属性赋值完成，来执行初始化方法
 @PreDestroy：在容器销毁Bean之前，通知我们进行清理工作
 构造方法 -> @PostConstruct -> @PreDestroy
-    
-初始化
 
-实现接口org.springframework.beans.factory.config.BeanPostProcessor： Bean的后置处理器
-org.springframework.beans.factory.config.BeanPostProcessor#postProcessBeforeInitialization：在初始化init-method之前
-org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization：在初始化之后
 ```
+
+- 初始化
+- 实现接口org.springframework.beans.factory.config.BeanPostProcessor： Bean的后置处理器
+- org.springframework.beans.factory.config.BeanPostProcessor#postProcessBeforeInitialization：@PostConstruct
+- InitializingBean    
+- init-method
+- org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization
 
 
 
 ## Spring底层对BeanPostProcessor使用
+
+Bean的**后置处理器**，当然Spring当中的后置处理器还有很多，例如BeanFactoryPostProcessor
 
 bean的赋值，注入其他组件，@Autowire，生命周期注解功能，@Async等都是通过BeanPostProcessor实现
 
@@ -157,7 +173,7 @@ bean的赋值，注入其他组件，@Autowire，生命周期注解功能，@Asy
 
 刷新容器
 
-```
+```java
 @Override
 public void refresh() throws BeansException, IllegalStateException {
    synchronized (this.startupShutdownMonitor) {
@@ -169,21 +185,14 @@ public void refresh() throws BeansException, IllegalStateException {
          finishRefresh();
       }
 }
-```
-
-
-
-```
+    
+// --------------------------------------------------------------------------------
 protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
    // Instantiate all remaining (non-lazy-init) singletons.
    beanFactory.preInstantiateSingletons();
 }
-```
-
-
-
-```
-@Override
+// --------------------------------------------------------------------------------
+    @Override
 public void preInstantiateSingletons() throws BeansException {
        getBean(beanName);
 }
@@ -226,7 +235,7 @@ public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, S
 
 
 
-```
+```java
 protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
    if (System.getSecurityManager() != null) {
       AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
@@ -245,7 +254,7 @@ protected Object initializeBean(final String beanName, final Object bean, @Nulla
    }
 
    try {
-       // init
+       // InitializingBean、init-method
       invokeInitMethods(beanName, wrappedBean, mbd);
    }
    catch (Throwable ex) {
@@ -300,7 +309,7 @@ environment.getProperty("person.nickname");
 
 ## 自动注入
 
-```
+```java
 @Autowired 优先按照类型，如果找到多个，再将属性中的名称作为组件的id去容器查找
 例如：
 @Autowired
@@ -335,7 +344,7 @@ public Car getCar(Test test){ // 参数从容器中获取
 
 
 
-```
+```java
 Java规范的注解
 @Resource (JSR250) 默认是按照组件的名称注入
 
@@ -354,9 +363,9 @@ javax.annotation.Resource
 
 ## Aware
 
-提供一种回调函数的机制
+提供一种**回调函数**的机制
 
-```
+```java
 BeanNameAware
 org.springframework.context.ApplicationContextAware 
 org.springframework.context.EmbeddedValueResolverAware 解析字符串
@@ -366,7 +375,7 @@ class Red implements BeanNameAware, ApplicationContextAware, EmbeddedValueResolv
 
 
 
-```
+```java
 xxxAware功能是使用xxxProcessor实现的， 
 例如：
 org.springframework.context.ApplicationContextAware 
@@ -390,7 +399,7 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 
 Spring为我们提供的可以根据当前环境，动态的激活和切换一系列组件的功能
 
-```
+```java
 获取properties内容
 第一步，先导入配置文件
 @PropertySource(value = {"classpath:/xxx.properties"})
@@ -414,7 +423,7 @@ private void getProperties(){
 
 
 
-```
+```java
 @Profile("test")
 @Profile("default") 默认
 
@@ -436,7 +445,7 @@ applicationContext.refresh();
 
 ## AOP
 
-```
+```java
 1.通知方法：
 @Before 前置通知
 @After 后置通知
@@ -478,7 +487,7 @@ public @interface EnableAspectJAutoProxy {
 
 ## 声明式事务
 
-```
+```java
 @Transactional
 
 @EnableTransactionManagement
@@ -491,7 +500,7 @@ JdbcTemplate
 
 ## Servlet3.0
 
-```
+```java
 @WebServlet
 
 @ServletContainerInitializer
@@ -510,3 +519,30 @@ Callable<String> async()
 
 new DeferredResult()
 ```
+
+
+
+## SpringMVC
+
+```java
+@Controller
+@RestController
+@RequestMapping
+@GetMapping
+@PostMapping
+@xxxMapping
+
+Modle
+ModleMap
+@RequestParam
+@RequestBody
+@PathVariable
+@ModelAttribute
+
+@ResponseBody
+```
+
+
+
+更多注解，可以在IDEA中输入@然后查看
+

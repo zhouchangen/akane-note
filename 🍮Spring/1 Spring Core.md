@@ -14,13 +14,15 @@ https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/inde
 
 # 准备
 
-建议：在阅读源码的时候，可以看看源码的注释，理解英文的概念，光看网上的翻译文章，容器造成误解
+建议：在阅读源码的时候，可以看看源码的注释，理解英文的概念，光看网上的翻译文章，容器造成误解。
 
 
 
 单词说明
 
-postProcess：理解为回调，后置处理器的意思
+postProcessor：后置处理器
+
+Aware：回调
 
 
 
@@ -925,7 +927,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
 
 #### BeanFactory定制
 
-**AbstractRefreshableApplicationContext.customizeBeanFactory()**给子类提供一个自由配置的机会
+**AbstractRefreshableApplicationContext.customizeBeanFactory()**给子类提供一个自由配置的机会，例如我们在这里就开始进行设置是否进行循环依赖
 
 ```java
 /**
@@ -944,7 +946,7 @@ public interface HierarchicalBeanFactory extends BeanFactory {
      */
     protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
         if (this.allowBeanDefinitionOverriding != null) {
-            //默认false，不允许覆盖
+            //默认true，允许覆盖
             beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
         }
         if (this.allowCircularReferences != null) {
@@ -954,25 +956,18 @@ public interface HierarchicalBeanFactory extends BeanFactory {
     }
 
 	/**
-	 * Set whether to allow the raw injection of a bean instance into some other
-	 * bean's property, despite the injected bean eventually getting wrapped
-	 * (for example, through AOP auto-proxying).
-	 * <p>This will only be used as a last resort in case of a circular reference
-	 * that cannot be resolved otherwise: essentially, preferring a raw instance
-	 * getting injected over a failure of the entire bean wiring process.
-	 * <p>Default is "false", as of Spring 2.0. Turn this on to allow for non-wrapped
-	 * raw beans injected into some of your references, which was Spring 1.2's
-	 * (arguably unclean) default behavior.
-	 * <p><b>NOTE:</b> It is generally recommended to not rely on circular references
-	 * between your beans, in particular with auto-proxying involved.
-	 * @see #setAllowCircularReferences
+	 * Set whether it should be allowed to override bean definitions by registering
+	 * a different definition with the same name, automatically replacing the former.
+	 * If not, an exception will be thrown. This also applies to overriding aliases.
+	 * <p>Default is "true".
+	 * @see #registerBeanDefinition
 	 */
-	public void setAllowRawInjectionDespiteWrapping(boolean allowRawInjectionDespiteWrapping) {
-		this.allowRawInjectionDespiteWrapping = allowRawInjectionDespiteWrapping;
+	public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding) {
+		this.allowBeanDefinitionOverriding = allowBeanDefinitionOverriding;
 	}
 
 
-    // 得到的是一个半引用，没有完全初始化的，默认是true
+    // 得到的是一个半引用(未完成生命周期)，默认是true
     // 尽量不要循环依赖，而是抽取一个公共的
 	/**
 	 * Set whether to allow circular references between beans - and automatically
@@ -1099,7 +1094,7 @@ org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#doRegi
 
 ### BeanDefinition 
 
-用于描述Bean的信息
+用于描述Bean的信息，因为Spring 的Bean并不是简单的对象，而是包含了很多信息，比如scope作用域， 是否需要懒加载，是否有依赖DependsOn等等。BeanDefinition可以理解为Spring对对象进行的一层封装，用于描述Bean的信息。
 
 ```java
 /**
@@ -1210,6 +1205,22 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 说明：此方法允许子类在所有的bean尚未初始化之前**添加BeanPostProcessor**。空实现且没有子类覆盖。
 
+子类实现，例如：AnnotationConfigServletWebApplicationContext
+
+```java
+protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+    super.postProcessBeanFactory(beanFactory);
+    if (!ObjectUtils.isEmpty(this.basePackages)) {
+        this.scanner.scan(this.basePackages);
+    }
+
+    if (!this.annotatedClasses.isEmpty()) {
+        this.reader.register(ClassUtils.toClassArray(this.annotatedClasses));
+    }
+
+}
+```
+
 
 
 从这一块开始，是放在一个try-catch-finally中。
@@ -1289,7 +1300,171 @@ getBeanFactoryPostProcessors获取的就是AbstractApplicationContext的成员be
 
 注意此处有一个**优先级**的概念，如果你的BeanFactoryPostProcessor同时实现了**Ordered或者是PriorityOrdered**接口，那么会被首先执行。
 
+```java
+public static void invokeBeanFactoryPostProcessors(
+      ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 
+   // Invoke BeanDefinitionRegistryPostProcessors first, if any.
+   Set<String> processedBeans = new HashSet<>();
+
+   if (beanFactory instanceof BeanDefinitionRegistry) {
+      BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+       // 分类
+      List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
+      List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
+
+      for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+         if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
+            BeanDefinitionRegistryPostProcessor registryProcessor =
+                  (BeanDefinitionRegistryPostProcessor) postProcessor;
+            // 调用postProcessBeanDefinitionRegistry
+            registryProcessor.postProcessBeanDefinitionRegistry(registry);
+            registryProcessors.add(registryProcessor);
+         }
+         else {
+            regularPostProcessors.add(postProcessor);
+         }
+      }
+
+      // Do not initialize FactoryBeans here: We need to leave all regular beans
+      // uninitialized to let the bean factory post-processors apply to them!
+      // Separate between BeanDefinitionRegistryPostProcessors that implement
+      // PriorityOrdered, Ordered, and the rest.
+      List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
+
+      // First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+	  // 首先，如果实现了PriorityOrdered先执行
+      String[] postProcessorNames =
+            beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+      for (String ppName : postProcessorNames) {
+         if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+            // 实例化
+            currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+            processedBeans.add(ppName);
+         }
+      }
+      // 排序
+      sortPostProcessors(currentRegistryProcessors, beanFactory);
+      registryProcessors.addAll(currentRegistryProcessors);
+      // 执行
+      invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+      // help GC
+      currentRegistryProcessors.clear();
+
+      // Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
+      // 如果实现了Ordered接口
+      postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+      for (String ppName : postProcessorNames) {
+         if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
+            currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+            processedBeans.add(ppName);
+         }
+      }
+      sortPostProcessors(currentRegistryProcessors, beanFactory);
+      registryProcessors.addAll(currentRegistryProcessors);
+      invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+      currentRegistryProcessors.clear();
+
+      // Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
+      boolean reiterate = true;
+      while (reiterate) {
+         reiterate = false;
+         postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+         for (String ppName : postProcessorNames) {
+            if (!processedBeans.contains(ppName)) {
+               currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+               processedBeans.add(ppName);
+               reiterate = true;
+            }
+         }
+         sortPostProcessors(currentRegistryProcessors, beanFactory);
+         registryProcessors.addAll(currentRegistryProcessors);
+         invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+         currentRegistryProcessors.clear();
+      }
+
+      // Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+      invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
+      invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
+   }
+
+   else {
+      // Invoke factory processors registered with the context instance.
+      invokeBeanFactoryPostProcessors(beanFactoryPostProcessors, beanFactory);
+   }
+
+   // Do not initialize FactoryBeans here: We need to leave all regular beans
+   // uninitialized to let the bean factory post-processors apply to them!
+   String[] postProcessorNames =
+         beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
+
+   // Separate between BeanFactoryPostProcessors that implement PriorityOrdered,
+   // Ordered, and the rest.
+   List<BeanFactoryPostProcessor> priorityOrderedPostProcessors = new ArrayList<>();
+   List<String> orderedPostProcessorNames = new ArrayList<>();
+   List<String> nonOrderedPostProcessorNames = new ArrayList<>();
+   for (String ppName : postProcessorNames) {
+      if (processedBeans.contains(ppName)) {
+         // skip - already processed in first phase above
+      }
+      else if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+         priorityOrderedPostProcessors.add(beanFactory.getBean(ppName, BeanFactoryPostProcessor.class));
+      }
+      else if (beanFactory.isTypeMatch(ppName, Ordered.class)) {
+         orderedPostProcessorNames.add(ppName);
+      }
+      else {
+         nonOrderedPostProcessorNames.add(ppName);
+      }
+   }
+
+   // First, invoke the BeanFactoryPostProcessors that implement PriorityOrdered.
+   sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
+   invokeBeanFactoryPostProcessors(priorityOrderedPostProcessors, beanFactory);
+
+   // Next, invoke the BeanFactoryPostProcessors that implement Ordered.
+   List<BeanFactoryPostProcessor> orderedPostProcessors = new ArrayList<>(orderedPostProcessorNames.size());
+   for (String postProcessorName : orderedPostProcessorNames) {
+      orderedPostProcessors.add(beanFactory.getBean(postProcessorName, BeanFactoryPostProcessor.class));
+   }
+   sortPostProcessors(orderedPostProcessors, beanFactory);
+   invokeBeanFactoryPostProcessors(orderedPostProcessors, beanFactory);
+
+   // Finally, invoke all other BeanFactoryPostProcessors.
+   List<BeanFactoryPostProcessor> nonOrderedPostProcessors = new ArrayList<>(nonOrderedPostProcessorNames.size());
+   for (String postProcessorName : nonOrderedPostProcessorNames) {
+      nonOrderedPostProcessors.add(beanFactory.getBean(postProcessorName, BeanFactoryPostProcessor.class));
+   }
+   invokeBeanFactoryPostProcessors(nonOrderedPostProcessors, beanFactory);
+
+   // Clear cached merged bean definitions since the post-processors might have
+   // modified the original metadata, e.g. replacing placeholders in values...
+   beanFactory.clearMetadataCache();
+}
+
+
+// ----------------------------------------------------------------------------------------------------
+	@Override
+	public int compare(@Nullable Object o1, @Nullable Object o2) {
+		return doCompare(o1, o2, null);
+	}
+
+	private int doCompare(@Nullable Object o1, @Nullable Object o2, @Nullable OrderSourceProvider sourceProvider) {
+		boolean p1 = (o1 instanceof PriorityOrdered);
+		boolean p2 = (o2 instanceof PriorityOrdered);
+		if (p1 && !p2) {
+			return -1;
+		}
+		else if (p2 && !p1) {
+			return 1;
+		}
+
+		int i1 = getOrder(o1, sourceProvider);
+		int i2 = getOrder(o2, sourceProvider);
+		return Integer.compare(i1, i2);
+	}
+
+```
 
 
 
@@ -1337,6 +1512,7 @@ MESSAGE_SOURCE_BEAN_NAME = messageSource
 ```java
 protected void initMessageSource() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        // 如果配置了改Bean，MESSAGE_SOURCE_BEAN_NAME = messageSource
         if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
             this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
             // Make MessageSource aware of parent MessageSource.
@@ -1371,9 +1547,8 @@ protected void initMessageSource() {
 
 **MessageSource 国际化资源获取**
 
-**ResourceBundleMessageSource**
-
-**ReloadableResourceBundleMessageSource 刷新资源**
+- **ResourceBundleMessageSource**
+- **ReloadableResourceBundleMessageSource 刷新资源**
 
 
 
@@ -1648,6 +1823,8 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
          * 实例化所有非懒加载的单例Bean
          */
         for (String beanName : beanNames) {
+            // RootBeanDefinition继承AbstractBeanDefinition，而AbstractBeanDefinition实现了BeanDefinition
+            // 在这里AbstractBeanDefinition就相应提供了一个默认的抽象的BeanDefinition，而RootBeanDefinition则是扩展
             RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
            
             if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
@@ -1672,6 +1849,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
                     }
                 }
                 else {
+                    // 普通Bean获取
                     getBean(beanName);
                 }
             }
@@ -2101,7 +2279,9 @@ public interface SmartFactoryBean<T> extends FactoryBean<T> {
 
 
 
-## 获取Spring手动注册的Bean
+## 获取Spring中的Bean
+
+首先会从容器缓存中获取，你可能会想第一次创建的时候肯定是在缓存中获取不到的。那为什么一开始还是从缓存中获取呢。第一个原因是：Spring其实一开始是会手动注册一些Bean到容器中，第二个原因是：用于解决循环依赖问题（具体分析将Spring循环依赖一章笔记）
 
 ```java
 Object sharedInstance = getSingleton(beanName);
@@ -2121,11 +2301,31 @@ if (sharedInstance != null && args == null) {
 
 
 
+## 三级缓存和Bean概念
+
+在说getSingleton方法之前，先解释一下网上俗称的Spring三级缓存。
+
+
+
+Spring三级缓存指的是Spring对**对象或Bean**的三个缓存，其实在前面我们也可以看到其实Spring中用了很多Map做为缓存，如：beanDefinitionMap、beanDefinitionNames、dependentBeanMap等。
+
+注：另外二级三级网上的有些说法可能是说反的，比如有人觉得你说的二级缓存是他说的三级缓存，这个存疑，后续如有机会查看官方是否有明确说明。总之，理解这三个map的作用即可，不用太在乎所谓的一二三级。
+
+
+
+- **一级缓存singletonObjects**: 缓存单例Bean，也就是经历了完整的**生命周期**的Bean
+- **二级缓存earlySingletonObjects**:  缓存早期(early)的Bean，也就是**未完成生命周期**的Bean
+- **三级缓存singletonFactories**: 缓存ObjectFactory，对象的工厂
+
+
+
+需要注意的是，Spring中的Bean并不是指简单的Java对象，而是指经历过一系列生命周期的Bean，最后完成添加到**一级缓存singletonObjects**，这样的对象你可以理解为才是Spring的Bean。
+
+
+
 ### getSingleton(beanName) -> getSingleton(String beanName, boolean allowEarlyReference) 
 
 获取单例Bean，注意这个getSingleton其实重载了好几个方法。
-
-
 
 - 参数一BeanName：表示Bean的名称
 - 参数二allowEarlyReference：表示是否要创建**EarlyReference**，这里为**true**
@@ -2181,17 +2381,9 @@ if (sharedInstance != null && args == null) {
 
 这里有意思的是，**如果allowEarlyReference为true**，并且从二级缓存中获取不到，则会到三级缓存中获取。
 
-三级缓存获取成功，则放入到二级缓存中，移除三级缓存对应的beanName
+三级缓存获取成功，则放入到二级缓存中，移除三级缓存对应的beanName。
 
-
-
-### 三级缓存
-
-俗称的三级缓存指的是对Bean的缓存，其实在前面我们也可以看到其实Spring中用了很多Map做为缓存，如：beanDefinitionMap、beanDefinitionNames、dependentBeanMap等
-
-- **一级缓存singletonObjects**: 缓存单例Bean，也就是经历了完整的**生命周期**的Bean
-- **二级缓存earlySingletonObjects**:  缓存早期(early)的Bean，也就是**未完成生命周期**的Bean
-- **三级缓存singletonFactories**: 缓存ObjectFactory，对象的工厂
+注：这里的设计其实是对循环依赖时候做的缓存，下一次在调用的时候直接从二级中获取，不用再调用singletonFactory.getObject();减少性能消耗，这里简单了解即可，在Spring循环依赖一章笔记中会详细举例说明。
 
 
 
@@ -2418,7 +2610,7 @@ public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
             throw ex;
          }
          finally {
-            // 赋值为null，GC
+            // 赋值为null，help GC
             if (recordSuppressedExceptions) {
                this.suppressedExceptions = null;
             }
@@ -2560,7 +2752,7 @@ ClassPathXmlApplicationContext#**refresh**
 
 1. createBeanInstance创建BeanWrapper
 2. 调用了实现MergedBeanDefinitionPostProcessors接口的postProcessMergedBeanDefinition
-3. 是否循环依赖，如触发生命周期方法回调的时候，如BeanFactoryAware等。将对象(?)放入到三级缓存中
+3. 是否需要提前暴露，如触发生命周期方法回调的时候，如BeanFactoryAware等。将对象(?)放入到三级缓存中
 4. populateBean属性解析，根据autowire类型进行autowire by name，by type 或者是直接进行设置
 5. 执行初始化生命周期的所需执行的方法，例如：Aware、BeanPostProcessors
 6. 从二级缓存中去获取
@@ -2616,7 +2808,7 @@ ClassPathXmlApplicationContext#**refresh**
 
         // Eagerly cache singletons to be able to resolve circular references
         // even when triggered by lifecycle interfaces like BeanFactoryAware.
-        // 是否循环依赖，如触发生命周期方法回调的时候，如BeanFactoryAware
+        // 是否需要提前暴露，如触发生命周期方法回调的时候，如BeanFactoryAware
         boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
                 isSingletonCurrentlyInCreation(beanName));
         if (earlySingletonExposure) {
@@ -2882,7 +3074,7 @@ protected BeanWrapper instantiateBean(final String beanName, final RootBeanDefin
 
 
 
-那这个Bean包装如何使用？
+那这个Bean包装如何使用？直接拿来调用相应的方法就可以获取Bean的一些相关信息 了
 
 ```java
 // 获取的就是Bean实例，见beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, parent);
@@ -2897,9 +3089,13 @@ if (beanType != NullBean.class) {
 
 ### populateBean
 
-1. 填充属性
-
+1. 填充属性，例如@Resource和@Autowired就是在这里通过后置处理器进行处理。
 2. 依赖处理
+
+
+
+- AutowiredAnnotationBeanPostProcessor @Autowired
+- CommonAnnotationBeanPostProcessor @Resource
 
 ```java
 /**
@@ -2964,12 +3160,16 @@ protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable B
       for (BeanPostProcessor bp : getBeanPostProcessors()) {
          if (bp instanceof InstantiationAwareBeanPostProcessor) {
             InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+            // BeanPostProcessor
+            // AutowiredAnnotationBeanPostProcessor @Autowired
+			// CommonAnnotationBeanPostProcessor @Resource
             PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
             if (pvsToUse == null) {
                if (filteredPds == null) {
                   filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
                }
                 // InstantiationAwareBeanPostProcessor属性处理，为成员变量赋值
+                //  关于 @Autowired自动注入的原理其实就在这里
                pvsToUse = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
                if (pvsToUse == null) {
                   return;
@@ -3084,15 +3284,311 @@ private void invokeAwareMethods(final String beanName, final Object bean) {
 
 
 
-#### BeanPostProcessor
+#### BeanPostProcessor.applyBeanPostProcessorsBeforeInitialization()
 
-如果实现了这个BeanPostProcessor，就会去调用相应的方法，类似于Aware
+如果实现了这个BeanPostProcessor，就会去调用相应的方法postProcessBeforeInitialization和postProcessAfterInitialization，类似于Aware。例如： @PostConstruct与@PreDestroy，**在这里分析@PostConstruct的原理。**
+
+
+
+首先我们可以写个简单的测试代码，然后debug
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.example.*")
+public class BeanConfiguration {
+
+    @Bean(value = "defaultUser", initMethod = "init", destroyMethod = "destroy")
+    public User getUser(){
+        return User.createDefaultUser();
+    }
+}
+
+
+public class User {
+
+    private String name;
+
+    private String bio;
+
+    public void init(){
+        System.out.println("init default user");
+    }
+
+    public void destroy(){
+        System.out.println("destroy default user");
+    }
+
+    @PostConstruct
+    public void postConstruct(){
+        System.out.println("postConstruct");
+    }
+
+    @PreDestroy
+    public void preDestroy(){
+        System.out.println("PreDestroy");
+    }
+
+
+    public User() {
+        System.out.println("User construct");
+    }
+}
+// Main方法省略
+```
+
+![image-20200927144702003](images/postconstruct.png)
+
+
+
+可以看到，调用执行的方法，就是BeanPostProcessor的postProcessBeforeInitialization()
+
+```java
+@Override
+public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName)
+      throws BeansException {
+
+   Object result = existingBean;
+   for (BeanPostProcessor processor : getBeanPostProcessors()) {
+      Object current = processor.postProcessBeforeInitialization(result, beanName);
+      if (current == null) {
+         return result;
+      }
+      result = current;
+   }
+   return result;
+}
+```
+
+
+
+可以看到，这里的BeanPostProcessor是CommonAnnotationBeanPostProcessor。但是，当我在IDEA中，**Ctrl+Alt+鼠标左键**想查看方法的实现时，并没有看到CommonAnnotationBeanPostProcessor。很明显实现的地方并不是CommonAnnotationBeanPostProcessor，而是其父类。
+
+这个时候，我们可以看看这个类的注释，**答案很明显，其实现在InitDestroyAnnotationBeanPostProcessor**
+
+```java
+/**
+ * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
+ * that supports common Java annotations out of the box, in particular the JSR-250
+ * annotations in the {@code javax.annotation} package. These common Java
+ * annotations are supported in many Java EE 5 technologies (e.g. JSF 1.2),
+ * as well as in Java 6's JAX-WS.
+ * 
+ * 注：这一段便说明了@PostConstruct的实现在InitDestroyAnnotationBeanPostProcessor
+ * <p>This post-processor includes support for the {@link javax.annotation.PostConstruct}
+ * and {@link javax.annotation.PreDestroy} annotations - as init annotation
+ * and destroy annotation, respectively - through inheriting from
+ * {@link InitDestroyAnnotationBeanPostProcessor} with pre-configured annotation types.
+ *
+ * <p>The central element is the {@link javax.annotation.Resource} annotation
+ * for annotation-driven injection of named beans, by default from the containing
+ * Spring BeanFactory, with only {@code mappedName} references resolved in JNDI.
+ * The {@link #setAlwaysUseJndiLookup "alwaysUseJndiLookup" flag} enforces JNDI lookups
+ * equivalent to standard Java EE 5 resource injection for {@code name} references
+ * and default names as well. The target beans can be simple POJOs, with no special
+ * requirements other than the type having to match.
+ *
+ * <p>The JAX-WS {@link javax.xml.ws.WebServiceRef} annotation is supported too,
+ * analogous to {@link javax.annotation.Resource} but with the capability of creating
+ * specific JAX-WS service endpoints. This may either point to an explicitly defined
+ * resource by name or operate on a locally specified JAX-WS service class. Finally,
+ * this post-processor also supports the EJB 3 {@link javax.ejb.EJB} annotation,
+ * analogous to {@link javax.annotation.Resource} as well, with the capability to
+ * specify both a local bean name and a global JNDI name for fallback retrieval.
+ * The target beans can be plain POJOs as well as EJB 3 Session Beans in this case.
+ *
+ * <p>The common annotations supported by this post-processor are available in
+ * Java 6 (JDK 1.6) as well as in Java EE 5/6 (which provides a standalone jar for
+ * its common annotations as well, allowing for use in any Java 5 based application).
+ *
+ * <p>For default usage, resolving resource names as Spring bean names,
+ * simply define the following in your application context:
+ *
+ * <pre class="code">
+ * &lt;bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor"/&gt;</pre>
+ *
+ * For direct JNDI access, resolving resource names as JNDI resource references
+ * within the Java EE application's "java:comp/env/" namespace, use the following:
+ *
+ * <pre class="code">
+ * &lt;bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor"&gt;
+ *   &lt;property name="alwaysUseJndiLookup" value="true"/&gt;
+ * &lt;/bean&gt;</pre>
+ *
+ * {@code mappedName} references will always be resolved in JNDI,
+ * allowing for global JNDI names (including "java:" prefix) as well. The
+ * "alwaysUseJndiLookup" flag just affects {@code name} references and
+ * default names (inferred from the field name / property name).
+ *
+ * <p><b>NOTE:</b> A default CommonAnnotationBeanPostProcessor will be registered
+ * by the "context:annotation-config" and "context:component-scan" XML tags.
+ * Remove or turn off the default annotation configuration there if you intend
+ * to specify a custom CommonAnnotationBeanPostProcessor bean definition!
+ * <p><b>NOTE:</b> Annotation injection will be performed <i>before</i> XML injection; thus
+ * the latter configuration will override the former for properties wired through
+ * both approaches.
+ *
+ * @author Juergen Hoeller
+ * @since 2.5
+ * @see #setAlwaysUseJndiLookup
+ * @see #setResourceFactory
+ * @see org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor
+ * @see org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor
+ */
+@SuppressWarnings("serial")
+public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor
+      implements InstantiationAwareBeanPostProcessor, BeanFactoryAware, Serializable {
+```
+
+
+
+InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization
+
+从下面的代码中，我们可以看到执行原理，就是调用了JDK的反射
+
+```java
+@Override
+public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+   LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
+   try {
+      // 反射执行
+      metadata.invokeInitMethods(bean, beanName);
+   }
+   catch (InvocationTargetException ex) {
+      throw new BeanCreationException(beanName, "Invocation of init method failed", ex.getTargetException());
+   }
+   catch (Throwable ex) {
+      throw new BeanCreationException(beanName, "Failed to invoke init method", ex);
+   }
+   return bean;
+}
+
+// --------------------------------------------------------------------------------------------------
+public void invokeInitMethods(Object target, String beanName) throws Throwable {
+    Collection<LifecycleElement> checkedInitMethods = this.checkedInitMethods;
+    Collection<LifecycleElement> initMethodsToIterate =
+        (checkedInitMethods != null ? checkedInitMethods : this.initMethods);
+    if (!initMethodsToIterate.isEmpty()) {
+        for (LifecycleElement element : initMethodsToIterate) {
+            if (logger.isTraceEnabled()) {
+                logger.trace("Invoking init method on bean '" + beanName + "': " + element.getMethod());
+            }
+            element.invoke(target);
+        }
+    }
+}
+// ------------------------------------------------------------------------------------------------------
+public void invoke(Object target) throws Throwable {
+    ReflectionUtils.makeAccessible(this.method);
+    this.method.invoke(target, (Object[]) null);
+}
+```
+
+
+
+但是我们并没有看到@PostConstruct在哪里注入的，答案就在于LifecycleMetadata
+
+这个类用于描述注解的init and destroy methods.
+
+```java
+// Class representing information about annotated init and destroy methods.
+LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
+// ------------------------------------------------------------------------------------------------------
+
+private LifecycleMetadata findLifecycleMetadata(Class<?> clazz) {
+		if (this.lifecycleMetadataCache == null) {
+			// Happens after deserialization, during destruction...
+			return buildLifecycleMetadata(clazz);
+		}
+		// Quick check on the concurrent map first, with minimal locking.
+		LifecycleMetadata metadata = this.lifecycleMetadataCache.get(clazz);
+		if (metadata == null) {
+			synchronized (this.lifecycleMetadataCache) {
+				metadata = this.lifecycleMetadataCache.get(clazz);
+				if (metadata == null) {
+                    // 构建LifecycleMetadata
+					metadata = buildLifecycleMetadata(clazz);
+					this.lifecycleMetadataCache.put(clazz, metadata);
+				}
+				return metadata;
+			}
+		}
+		return metadata;
+	}
+
+// ------------------------------------------------------------------------------------------------------
+	private LifecycleMetadata buildLifecycleMetadata(final Class<?> clazz) {
+		if (!AnnotationUtils.isCandidateClass(clazz, Arrays.asList(this.initAnnotationType, this.destroyAnnotationType))) {
+			return this.emptyLifecycleMetadata;
+		}
+
+		List<LifecycleElement> initMethods = new ArrayList<>();
+		List<LifecycleElement> destroyMethods = new ArrayList<>();
+		Class<?> targetClass = clazz;
+
+		do {
+			final List<LifecycleElement> currInitMethods = new ArrayList<>();
+			final List<LifecycleElement> currDestroyMethods = new ArrayList<>();
+
+            // 从这里我们看到，这里会遍历所有方法，看看是否标记有initAnnotationType和destroyAnnotationType
+			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
+				if (this.initAnnotationType != null && method.isAnnotationPresent(this.initAnnotationType)) {
+					LifecycleElement element = new LifecycleElement(method);
+					currInitMethods.add(element);
+					if (logger.isTraceEnabled()) {
+						logger.trace("Found init method on class [" + clazz.getName() + "]: " + method);
+					}
+				}
+				if (this.destroyAnnotationType != null && method.isAnnotationPresent(this.destroyAnnotationType)) {
+					currDestroyMethods.add(new LifecycleElement(method));
+					if (logger.isTraceEnabled()) {
+						logger.trace("Found destroy method on class [" + clazz.getName() + "]: " + method);
+					}
+				}
+			});
+			// 将InitMethods和DestroyMethods添加进去
+			initMethods.addAll(0, currInitMethods);
+			destroyMethods.addAll(currDestroyMethods);
+			targetClass = targetClass.getSuperclass();
+		}
+		while (targetClass != null && targetClass != Object.class);
+
+		return (initMethods.isEmpty() && destroyMethods.isEmpty() ? this.emptyLifecycleMetadata :
+				new LifecycleMetadata(clazz, initMethods, destroyMethods));
+	}
+```
+
+从上面我们看到，这里会遍历所有方法，看看是否标记有initAnnotationType和destroyAnnotationType，那这个值是什么？
+
+很简单，我们在IDEA中通过Ctrl+鼠标左键，查看set方法即可。最后发现，其实就是来源于CommonAnnotationBeanPostProcessor
+
+```java
+@Nullable
+private Class<? extends Annotation> initAnnotationType;
+
+@Nullable
+private Class<? extends Annotation> destroyAnnotationType;
+// ------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Create a new CommonAnnotationBeanPostProcessor,
+	 * with the init and destroy annotation types set to
+	 * {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy},
+	 * respectively.
+	 */
+	public CommonAnnotationBeanPostProcessor() {
+		setOrder(Ordered.LOWEST_PRECEDENCE - 3);
+		setInitAnnotationType(PostConstruct.class);
+		setDestroyAnnotationType(PreDestroy.class);
+		ignoreResourceType("javax.xml.ws.WebServiceContext");
+	}
+
+```
 
 
 
 #### invokeInitMethods
 
-如果实现了InitializingBean，就会调用相应的方法
+如果实现了InitializingBean，就会调用相应的方法afterPropertiesSet，在这里先执行afterPropertiesSet，再执行自定义的init-method
 
 ```java
 /**
@@ -3162,32 +3658,107 @@ public class User {
 }
 
 // initMethod对应类中的方法
-@Bean(value = "defaultUser", initMethod = "init", destroyMethod = "destroy")
+@Bean(value = "defaultUser", initMethod = "init", destrodeyMethod = "destroy")
 public User getUser(){
     return User.createDefaultUser();
 }
 ```
 
+destrodeyMethod原理同，DestructionAwareBeanPostProcessor
 
 
-#### Bean的生命周期
+
+#### BeanPostProcessor.applyBeanPostProcessorsAfterInitialization()
+
+例如：AnnotationAwareAspectJAutoProxyCreator 就是完成AOP代理的，这里详细见Spring AOP一章笔记
+
+```java
+	@Override
+	public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
+			throws BeansException {
+
+		Object result = existingBean;
+		for (BeanPostProcessor processor : getBeanPostProcessors()) {
+			Object current = processor.postProcessAfterInitialization(result, beanName);
+			if (current == null) {
+				return result;
+			}
+			result = current;
+		}
+		return result;
+	}
+
+
+// -----------------------------------------------------------------------------
+	@Override
+	public Object postProcessAfterInitialization(@Nullable Object bean, String beanName) {
+		if (bean != null) {
+			Object cacheKey = getCacheKey(bean.getClass(), beanName);
+			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
+				return wrapIfNecessary(bean, beanName, cacheKey);
+			}
+		}
+		return bean;
+	}
+```
+
+
+
+## InitializingBean与DisposableBean，initMethod与destrodeyMethod，@PostConstruct与@PreDestroy
+
+从上面InitializingBean的过程，我们可以总结一下上面的执行顺序
+
+Constructor > @PostConstruct > InitializingBean > initMethod > DisposableBean > PreDestroy > destrodeyMethod
+
+- Constructor :  创建实例
+- @PostConstruct：BeanPostProcessor
+- InitializingBean 
+- initMethod
+- DisposableBean > PreDestroy > destrodeyMethod
+
+
+
+## Bean的生命周期
 
 1. Aware
-
 2. BeanPostProcessors beforeInitilaz
-
 3. initializeBean
-
 4. init-method
-
 5. BeanPostProcessors afterInitilaz
-
 6. DisposableBean
-
 7. destroy-method
 
-   
 
-   ### finishRefresh
 
-并发容器的生命周期事件
+### 3.12 finishRefresh
+
+初始化和生命周期有关的后置处理器及事件发布
+
+```java
+/**
+ * Finish the refresh of this context, invoking the LifecycleProcessor's
+ * onRefresh() method and publishing the
+ * {@link org.springframework.context.event.ContextRefreshedEvent}.
+ */
+protected void finishRefresh() {
+   // Clear context-level resource caches (such as ASM metadata from scanning).
+   clearResourceCaches();
+
+   // Initialize lifecycle processor for this context.
+   // 初始化生命周期处理器
+   initLifecycleProcessor();
+
+   // Propagate refresh to lifecycle processor first.
+   // 调用生命周期处理器
+   getLifecycleProcessor().onRefresh();
+
+   // Publish the final event.
+   // 推送上下文刷新完毕事件到相应的监听器
+   publishEvent(new ContextRefreshedEvent(this));
+
+   // Participate in LiveBeansView MBean, if active.
+   LiveBeansView.registerApplicationContext(this);
+}
+```
+
+
