@@ -243,6 +243,40 @@ AnnotationAwareAspectJAutoProxyCreator体系结构
 
 ### AbstractAutoProxyCreator#postProcessBeforeInstantiation
 
+**注意**：这里的是postProcessBefore**Instantiation**，这个是InstantiationAwareBeanPostProcessor的
+
+这一步处理在
+
+```java
+try {
+   // Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
+   Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
+   if (bean != null) {
+      return bean;
+   }
+}
+// ----------------------------------------------------------------------------------------------------------------------------
+	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
+		Object bean = null;
+		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
+			// Make sure bean class is actually resolved at this point.
+			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
+				Class<?> targetType = determineTargetType(beanName, mbd);
+				if (targetType != null) {
+					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
+					if (bean != null) {
+						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+					}
+				}
+			}
+			mbd.beforeInstantiationResolved = (bean != null);
+		}
+		return bean;
+	}
+```
+
+
+
 代理并预先缓存切面
 
 ```java
@@ -630,7 +664,70 @@ public List<Advisor> getAdvisors(MetadataAwareAspectInstanceFactory aspectInstan
 
 
 
-### AbstractAutoProxyCreator#postProcessAfterInstantiation
+### AbstractAutoProxyCreator#postProcessAfterInitialization
+
+**注意**：这里的是postProcessAfter**Initialization**，这个是BeanPostProcessor。
+
+InstantiationAwareBeanPostProcessor是BeanPostProcessor的子接口。
+
+
+
+**Instantiation 与 Initialization 对比**
+
+单词很像，意思却不相同
+
+- Instantiation 实例化
+- Initialization 初始化
+
+
+
+这一步处理在
+
+BeanPostProcessor后置处理器
+
+```java
+// Initialize the bean instance.
+		Object exposedObject = bean;
+		try {
+			populateBean(beanName, mbd, instanceWrapper);
+			exposedObject = initializeBean(beanName, exposedObject, mbd);
+		}
+// ----------------------------------------------------------------------------------------------------------------------------
+protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
+		if (System.getSecurityManager() != null) {
+			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+				invokeAwareMethods(beanName, bean);
+				return null;
+			}, getAccessControlContext());
+		}
+		else {
+			invokeAwareMethods(beanName, bean);
+		}
+
+		Object wrappedBean = bean;
+		if (mbd == null || !mbd.isSynthetic()) {
+			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+		}
+
+		try {
+			invokeInitMethods(beanName, wrappedBean, mbd);
+		}
+		catch (Throwable ex) {
+			throw new BeanCreationException(
+					(mbd != null ? mbd.getResourceDescription() : null),
+					beanName, "Invocation of init method failed", ex);
+		}
+		if (mbd == null || !mbd.isSynthetic()) {
+			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+		}
+
+		return wrappedBean;
+	}
+```
+
+
+
+
 
 后置处理，创建代理类
 
@@ -880,3 +977,15 @@ public Object getProxy(@Nullable ClassLoader classLoader) {
    }
 }
 ```
+
+
+
+## 总结
+
+Spring AOP主要流程：解析切面信息——>bean实例化是否有适用切面——>是则创建代理对象
+
+
+
+先解析切面信息，生产Advisor。然后利用BeanPostProcessors，在Bean的生命周期进行回调处理，判断是否有适用的切面类，如果有则创建代理对象。
+
+在这里可以自由选择是JDK动态代理还是CGlib代理。

@@ -2695,8 +2695,10 @@ protected void addSingleton(String beanName, Object singletonObject) {
 
         try {
             // Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
-            // 2.触发postProcessBeforeInitialization和postProcessAfterInstantiation方法
-            // 给BeanPostProcessors一个返回代理对象机会，AOP
+            // 2.触发applyBeanPostProcessorsBeforeInstantiationn和applyBeanPostProcessorsAfterInitialization方法
+            // 给BeanPostProcessors一个返回代理对象机会
+            // 注意：applyBeanPostProcessorsBeforeInstantiation是实例化之前，而applyBeanPostProcessorsAfterInitialization是初始化后
+            // 区分单词Instantiation和Initialization **************************************************************************
             Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
             // 如果不为空，则直接返回
             if (bean != null) {
