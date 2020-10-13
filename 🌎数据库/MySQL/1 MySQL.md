@@ -20,6 +20,19 @@
 
 
 
+Nested-Loop 
+
+Block Nested-Loop
+
+join的本质是嵌套循环，因此建议是小表join大表，因为如果有索引的话，小表查询速度更快，循环次数更少。
+
+joins_buffer
+
+```mysql
+-- 默认262144 256k
+show variables like '%join_buffer%';
+```
+
 
 
 ## 3 性能优化
@@ -87,3 +100,29 @@ select GLOBAL STATUS like 'innodb_page_size'
 ## 7 MySQL悲观锁
 
 for update
+
+
+
+## 6、left函数 
+
+
+
+## 7、\G
+
+表示将查询结果进行按列打印，可以使每个字段打印到单独的行。即**将查到的结构旋转90度变成纵向；**
+
+
+
+### 8、SHOW PROFILES;
+
+```MYSQL
+set profiling =1 ;
+
+show profiles;
+
+show status like 'Handler_read%'
+```
+
+
+
+查询的生命周期
