@@ -405,6 +405,8 @@ protected List<Advisor> findCandidateAdvisors() {
 
 
 
+findAdvisorBeans
+
 ```java
 /**
  * Find all eligible Advisor beans in the current bean factory,
@@ -975,6 +977,126 @@ public Object getProxy(@Nullable ClassLoader classLoader) {
       // TargetSource.getTarget() failed
       throw new AopConfigException("Unexpected AOP exception", ex);
    }
+}
+```
+
+
+
+## 调用
+
+### CallbackFilter & Callback
+
+还有一个关键的问题，从上面可以知道我们获取的是一个代理对象，那当调用代理对象相应的方法(例如：dosomething)时，实际又是如何调用的呢？
+
+
+
+### CGLIB
+
+首先如何是CGlib代理，要理解两个概念Callback和CallbackFilter
+
+- Callback：是Cglib所有自定义逻辑(增强)的共同接口。
+- CallbackFilter：在CGLib回调时可以设置对不同方法执行不同的回调逻辑，或者根本不执行回调。
+
+但是jdk并不支持这么搞，只支持设置一个InvocationHandler处理(拦截)所有的方法。
+
+
+
+DynamicAdvisedInterceptor
+
+——>MethodInterceptor
+
+——>Callback
+
+```java
+/**
+	 * General purpose AOP callback. Used when the target is dynamic or when the
+	 * proxy is not frozen.
+	 */
+	private static class DynamicAdvisedInterceptor implements MethodInterceptor, Serializable {
+
+		private final AdvisedSupport advised;
+
+		public DynamicAdvisedInterceptor(AdvisedSupport advised) {
+			this.advised = advised;
+		}
+
+		@Override
+		@Nullable
+		public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+			Object oldProxy = null;
+			boolean setProxyContext = false;
+			Object target = null;
+			TargetSource targetSource = this.advised.getTargetSource();
+			try {
+				if (this.advised.exposeProxy) {
+					// Make invocation available if necessary.
+					oldProxy = AopContext.setCurrentProxy(proxy);
+					setProxyContext = true;
+				}
+				// Get as late as possible to minimize the time we "own" the target, in case it comes from a pool...
+                // 获得被代理的对象
+				target = targetSource.getTarget();
+				Class<?> targetClass = (target != null ? target.getClass() : null);
+				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
+				Object retVal;
+				// Check whether we only have one InvokerInterceptor: that is,
+				// no real advice, but just reflective invocation of the target.
+				if (chain.isEmpty() && Modifier.isPublic(method.getModifiers())) {
+					// We can skip creating a MethodInvocation: just invoke the target directly.
+					// Note that the final invoker must be an InvokerInterceptor, so we know
+					// it does nothing but a reflective operation on the target, and no hot
+					// swapping or fancy proxying.
+					Object[] argsToUse = AopProxyUtils.adaptArgumentsIfNecessary(method, args);
+					retVal = methodProxy.invoke(target, argsToUse);
+				}
+				else {
+					// We need to create a method invocation...
+					retVal = new CglibMethodInvocation(proxy, target, method, args, targetClass, chain, methodProxy).proceed();
+				}
+				retVal = processReturnType(proxy, target, method, retVal);
+				return retVal;
+			}
+			finally {
+				if (target != null && !targetSource.isStatic()) {
+					targetSource.releaseTarget(target);
+				}
+				if (setProxyContext) {
+					// Restore old proxy.
+					AopContext.setCurrentProxy(oldProxy);
+				}
+			}
+		}
+```
+
+
+
+### 回调
+
+一般的方法使用的是DynamicAdvisedInterceptor作为回调逻辑，其intercept关键源码:
+
+```
+@Override
+public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) {
+    Object target = getTarget();
+}
+```
+
+target就是被代理对象。
+
+getTarget:
+
+```
+protected Object getTarget() throws Exception {
+    return this.advised.getTargetSource().getTarget();
+}
+```
+
+TargetSource前面说过了，默认是SimpleBeanTargetSource:
+
+```
+@Override
+public Object getTarget() throws Exception {
+    return getBeanFactory().getBean(getTargetBeanName());
 }
 ```
 

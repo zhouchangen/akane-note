@@ -1,4 +1,4 @@
-# Spring Core
+# Spring IOC
 
 spring的源码很多，这里主要是了解spring的主流应用，如spring-core，spring-aop，spring-ioc，spring-bean，spring-tx，spring-mvc等。
 

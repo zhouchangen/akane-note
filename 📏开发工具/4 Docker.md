@@ -1,6 +1,6 @@
 # 4 Docker
 
-## Docker应用容器引擎** **
+## Docker应用容器引擎
 
 > Docker 是一个开源的应用容器引擎，基于 [Go 语言](http://www.runoob.com/go/go-tutorial.html) 并遵从Apache2.0协议开源。
 >

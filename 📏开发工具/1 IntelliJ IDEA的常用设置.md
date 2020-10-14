@@ -164,3 +164,5 @@ EasyCode Mybatis
 RestfulToolkit 可以根据URL跳转到对应的方法(全局快捷搜索：*Ctrl \\* )
 
 SonarLint
+
+Translation 翻译工具
