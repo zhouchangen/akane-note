@@ -126,3 +126,11 @@ show status like 'Handler_read%'
 
 
 查询的生命周期
+
+
+
+
+
+设计，一个表最好有创建人、创建时间，更新时间，更新人，便于业务追踪
+
+![time.png](images/time.png)
