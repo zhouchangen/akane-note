@@ -1,6 +1,16 @@
 # Spring循环依赖问题
 
-https://www.bilibili.com/video/BV1uE411d7L5?p=6
+
+
+视频：子路老师Spring循环依赖讲解https://www.bilibili.com/video/BV1uE411d7L5?p=6
+
+注：在观看该视频的时候，其实前面11章已经将循环依赖问题讲解清除，后续的视频有些重复了。
+
+
+
+可能大部分人都知道Spring循环依赖问题的解决是通过三级缓存，但是我一直有一个疑问是，Spring处理循环依赖是在哪里调用，真正的调用地方又是在哪里。现在一起来研究一下。
+
+
 
 ## 前言
 
@@ -208,7 +218,7 @@ if (earlySingletonExposure) {
 
 
 
-接着AService便开始populateBean填充属性，**由于我们这里使用的是@Autowired注入，因此当bp是AutowiredAnnotationBeanPostProcessor时，便会开始注入bService**
+接着AService便开始**populateBean填充属性**，**由于我们这里使用的是@Autowired注入，因此当bp是AutowiredAnnotationBeanPostProcessor时，便会开始注入bService**
 
 如果是@Resource，对应的后置处理器是CommonAnnotationBeanPostProcessor
 
@@ -411,7 +421,5 @@ earlySingletonObjects，如我们上面提到的AService，当BService创建的�
 
 ## 总结
 
-Spring解决循环依赖，主要是通过BeanPostProcessors和三级缓存singletonFactory解决。
-
-当调用populateBean时候，通过BeanPostProcessors进行填充属性。
+Spring解决循环依赖，主要是通过BeanPostProcessors和三级缓存singletonFactory解决。当调用populateBean时候，通过BeanPostProcessors进行填充属性。
 

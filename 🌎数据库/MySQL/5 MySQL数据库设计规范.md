@@ -4,6 +4,10 @@
 
 
 
+MySQL数据库设计规范是规范，也是优化的一种思路。
+
+
+
 ## 1. 规范背景与目的
 
 MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的优势与劣势。我们在使用MySQL数据库的时候需要遵循一定规范，扬长避短。本规范旨在帮助或指导RD、QA、OP等技术人员做出适合线上业务的数据库设计。在数据库变更和处理流程、数据库表设计、SQL编写等方面予以规范，从而为公司业务系统稳定、健康地运行提供保障。
@@ -203,3 +207,13 @@ KEY `idx_create_time`(`create_time`,`user_review_status`) ) ENGINE=InnoDB DEFAUL
 3. 【强制】禁用procedure、function、trigger、views、event、外键约束。因为他们消耗数据库资源，降低数据库实例可扩展性。推荐都在程序端实现。
 4. 【强制】禁用`insert into …on duplicate key update…`**在高并发环境下，会造成主从不一致**。
 5. 【强制】禁止联表更新语句，如`update t1,t2 where t1.id=t2.id…`。
+
+
+
+
+
+## 2.3 补充
+
+1. 【建议】一个表最好有创建人、创建时间，更新时间（根据当前时间戳更新：**自动更新**），更新人，便于业务追踪
+
+![time.png](D:/Note/akane-note/🌎数据库/MySQL/images/time.png)

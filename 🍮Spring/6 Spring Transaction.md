@@ -1,10 +1,12 @@
 # Spring Transaction
 
+文章：https://github.com/seaswalker/spring-analysis/blob/master/note/spring-transaction.md
+
+[spring源码阅读--@Transactional实现原理](https://blog.csdn.net/qq_20597727/article/details/84868035)
+
 
 
 在了解了Spring AOP后，再来看看Spring的事务。Spring的声明式事务利用的就是AOP，@Transactional就像是我们的切入点@Around，而@Before和@After就像是准备事务，提交事务。如有异常则进行回滚。在本章中，也会研究一下Spring中的事务隔离和事务传播，更多事务的内容会另起一章详细分析，例如分布式事务、MySQL中的加锁机制，不同隔离级别在事务中出现的问题以及解决方案。
-
-
 
 
 
@@ -23,8 +25,16 @@ Spring支持编程式事务管理和声明式事务管理两种方式
 
 ## 几个概念
 
+文章：
+
+[DataSource数据源简单理解](https://blog.csdn.net/qq_40910541/article/details/80771607)
+
+[数据源(DataSource)是什么以及SpringBoot中数据源配置](https://blog.csdn.net/weixin_33935777/article/details/91445354?utm_medium=distribute.pc_relevant.none-task-blog-title-5&spm=1001.2101.3001.4242)
+
+
+
 - PlatformTransactionManager：事务管理器 
-- DataSource：数据源 
+- DataSource：数据源。（数据源是对数据库以及对数据库交互操作的抽象，它封装了目标源的位置信息，验证信息和建立与关闭连接的操作。数据源大致分为2种：**不提供连接池**和**提供连接池管理**）
 - Connection：客户端和数据库的连接
 - TransactionStatus：事务状态，用于手动设置回滚，查看事务状态，事务保存点savepoint
 
@@ -764,6 +774,14 @@ if (transManager.getTransaction(transDefinition).isRollbackOnly()) {
 
 
 
+## @Transactional常见问题
+
+- @Transactional注解标注方法修饰符为**非public**时，@Transactional注解将会不起作用。
+- 在类内部调用调用类内部@Transactional标注的方法。这种情况下也会导致事务不开启。
+- 事务方法内部捕捉了异常，没有抛出新的异常，导致事务操作不会进行回滚。
+
+
+
 ## @Transactional源码
 
 ```java
@@ -943,3 +961,15 @@ public @interface Transactional {
 - SERIALIZABLE：所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。但是这将严重影响程序的性能。通常情况下也不会用到该级别。
 
 从上面来看，能供我们选择的也只有READ_COMMITTED和REPEATABLE_READ，俗称的RC和RR级别。对于脏读、不可重复读以及幻读，以及隔离级别，分布式事务，数据库的锁，会在另一章再详细分析。
+
+
+
+READ_COMMITTED：禁止脏读，但允许不可重复读和幻读
+
+REPEATABLE_READ：禁止脏读和不可重复读，但运行幻读
+
+
+
+## 总结
+
+本章分析了Spring事务的实现原理，处理的流程。对事务的传播实现进行了分析，另外对@Transactional注解常用功能进行总结。

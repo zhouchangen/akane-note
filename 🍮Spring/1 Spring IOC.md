@@ -1,12 +1,18 @@
 # Spring IOC
 
-spring的源码很多，这里主要是了解spring的主流应用，如spring-core，spring-aop，spring-ioc，spring-bean，spring-tx，spring-mvc等。
+spring的源码很多，这里主要是了解spring的主流应用，如spring-ioc，spring-aop，spring-ioc，spring-bean，spring-tx，spring-mvc等。
 
-https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/index.html
+官方文档：https://docs.spring.io/spring/docs/5.2.6.RELEASE/spring-framework-reference/index.html
+
+
+
+
 
 ![image.png](images/spring.png)
 
 
+
+在本章中，主要是了解Spring对Bean的管理，以及Spring容器刷新的过程，研究网上所说的一些概念知识，如postProcessor和Aware，三级缓存，Bean的生命周期等。
 
 注：本篇文章是阅读[spring-core源码分析](https://github.com/seaswalker/spring-analysis/blob/master/note/Spring.md)、[嘎嘎的博客](https://blog.csdn.net/qq_20597727)及阅读网上博客的笔记，外接自己的理解和总结，原文写的比较详细和深入，一些个人不了解的地方会跳过。如果是方法，会加上双括号**()**作为和类的命名区分。
 
@@ -3763,4 +3769,11 @@ protected void finishRefresh() {
 }
 ```
 
+
+
+
+
+## 总结
+
+Spring启动主要分几个步骤：首先是解析配置文件，之后准备容器，刷新容器，最后完成初始化和生命周期有关的后置处理器及事件发布。
 

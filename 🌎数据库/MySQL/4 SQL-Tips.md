@@ -1,5 +1,7 @@
 # 4 SQL-Tips
 
+
+
 ## 1、重复数据保留一条
 
 ```
@@ -73,11 +75,13 @@ group by DATE_FORMAT(create_time,'%Y-%m-%d')
 
 ## 5、GROUP_CONCAT
 
-GROUP_CONCAT将组中的字符串连接成为具有各种选项的单个字符串
+GROUP_CONCAT将组中的字符串连接成为具有各种选项的单个字符串。
+
+注意：当内容达到group_concat_max_len 时，会进行截取，默认是1024
 
 
 
-```
+```mysql
 INSERT INTO t(v) VALUES('A'),('B'),('C'),('B');
 
 +---------------------------------------------------------------------+
@@ -92,5 +96,40 @@ INSERT INTO t(v) VALUES('A'),('B'),('C'),('B');
 
 
 
-### 
+## 6、\G
+
+表示将查询结果进行按列打印，可以使每个字段打印到单独的行。即**将查到的结构旋转90度变成纵向；**
+
+**注**：navicat不支持\G
+
+```mysql
+mysql> use test;
+Database changed
+mysql> select * from user\G
+*************************** 1. row ***************************
+      id: 1
+ user_id: 6001
+username: MF00001
+    desc: 轻音少女- K-ON!
+*************************** 2. row ***************************
+      id: 2
+ user_id: 6002
+username: MF00002
+    desc: NULL
+*************************** 3. row ***************************
+      id: 3
+ user_id: 6003
+username: MF00003
+    desc: NULL
+*************************** 4. row ***************************
+      id: 4
+ user_id: 6004
+username: MF99999
+    desc: NULL
+4 rows in set (0.00 sec)
+```
+
+
+
+
 
