@@ -76,6 +76,26 @@ mysql> show profile all for query 2;
 
 
 
+**show status like 'Handler_read%'**
+
+ 查看服务器状态
+
+- Handler_read_first：读取索引第一个条目的次数（说明进行了全表扫描）
+
+- **Handler_read_key：通过index获取数据的次数**（较高，说明使用索引情况较多）
+- Handler_read_last：读取索引最后一个条目的次数
+
+- Handler_read_next：通过索引读取下一条数据的次数
+
+- Handler_read_prev：通过索引读取上一条数据的次数（一般是使用了order by）
+
+- Handler_read_rnd：从固定位置读取数据的次数 （很多时候表现为没有使用索引或者文件排序）
+
+- Handler_read_rnd_next：从数据节点读取下一条数据的次数（常说明你的表索引不正确或写入的查询没有利用索引）
+
+
+
+
 ### 数据类型知识
 
 #### BLOB 和 TEXT 
@@ -247,7 +267,7 @@ show profiles;
 show table like
 
 
-show status like 'Handler_read%'
+
 ```
 
 
