@@ -1,10 +1,14 @@
-# mysql执行计划
+# MySQL explain执行计划
 
-​       在企业的应用场景中，为了知道优化SQL语句的执行，需要查看SQL语句的具体执行过程，以加快SQL语句的执行效率。
+来源：https://github.com/bjmashibing/InternetArchitect
 
-​       可以使用explain+SQL语句来模拟优化器执行SQL查询语句，从而知道mysql是如何处理sql语句的。
+在企业的应用场景中，为了知道优化SQL语句的执行，需要查看SQL语句的具体执行过程，以加快SQL语句的执行效率。
 
-​	   官网地址： https://dev.mysql.com/doc/refman/5.5/en/explain-output.html 
+可以使用explain+SQL语句来模拟优化器执行SQL查询语句，从而知道mysql是如何处理sql语句的。
+
+官网地址： https://dev.mysql.com/doc/refman/5.5/en/explain-output.html 
+
+
 
 ### 1、执行计划中包含的信息
 

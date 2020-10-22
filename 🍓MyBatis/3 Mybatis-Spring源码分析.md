@@ -1,4 +1,4 @@
-# 3 Mybatis-Spring源码分析
+# Mybatis-Spring源码分析
 
 阅读源码的意义，学习其实现的架构和思想，其次懂得扩展。
 

@@ -1,4 +1,4 @@
-# 5 Mybatis和SpringBoot
+# Mybatis和SpringBoot
 
 阅读源码的意义，学习其实现的架构和思想，其次懂得扩展。
 

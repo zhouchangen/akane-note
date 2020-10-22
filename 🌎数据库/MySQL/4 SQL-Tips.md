@@ -24,7 +24,7 @@ and tid not in (
 
 ## 2、存储过程，生成自增值
 
-```
+```mysql
 delimiter ;;
 CREATE PROCEDURE proc_batch_insert()
 BEGIN
@@ -54,7 +54,7 @@ insert ignore into table
 
 
 
-```
+```mysql
 -- 日均单量 365天
 
 select count(DISTINCT order_no)/365 AS 日均单量

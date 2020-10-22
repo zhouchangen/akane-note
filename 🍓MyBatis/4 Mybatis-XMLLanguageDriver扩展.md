@@ -1,4 +1,4 @@
-# 4 Mybatis-XMLLanguageDriver扩展
+# Mybatis-XMLLanguageDriver扩展
 
 
 
@@ -10,7 +10,7 @@ Mybatis原生的@Select注解并不支持IN查询，但是提供了Mybatis中提
 
 ### 继承XMLLanguageDriver
 
-```
+```java
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.ibatis.mapping.SqlSource;
@@ -43,8 +43,9 @@ public class SimpleSelectInExtendedLanguageDriver extends XMLLanguageDriver impl
 
 ### 使用
 
-```
+```java
 @Select("SELECT * FROM T WHERE id IN (#{ids})")
 @Lang(SimpleSelectInExtendedLanguageDriver.class) // 使用
 List<User> listBy(@Param("ids") List<Integer> ids);
 ```
+

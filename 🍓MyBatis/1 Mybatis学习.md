@@ -1,4 +1,4 @@
-# 1 Mybatis学习
+# Mybatis学习
 
 # Mybatis
 

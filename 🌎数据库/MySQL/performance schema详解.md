@@ -1,5 +1,9 @@
 # MYSQL performance schema详解
 
+来源：https://github.com/bjmashibing/InternetArchitect
+
+
+
 ### 0、performance_schema的介绍
 
 ​		**MySQL的performance schema 用于监控MySQL server在一个较低级别的运行过程中的资源消耗、资源等待等情况**。
