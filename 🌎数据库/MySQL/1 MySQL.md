@@ -106,7 +106,7 @@ performance schema详解.md)
 
 #### show status like 'last_query_cost'
 
-当我们执行查询的时候，MySQL会自动生成一个执行计划。查看执行的成本
+当我们执行查询的时候，MySQL会自动生成一个执行计划。查看执行的成本，数值越大说明花费越大
 
 ```mysql
 show status like 'last_query_cost';
@@ -147,6 +147,8 @@ MySQL 把每个 BLOB 和 TEXT 值当作一个独立的对象处理。两者都�
 ## JOIN联表
 
 join的本质是嵌套循环，因此建议是**小表join大表**，因为如果有索引的话，小表查询速度更快，循环次数更少。
+
+当表A和表B使用列C关联的时候，如果优化器的关联顺序是B、A，那么就不需要再B表的对应列上建上索引，**没有用到的索引只会带来额外的负担**，一般情况下来说**，只需要在关联顺序中的第二个表的相应列上创建索引**
 
 官方文档：https://dev.mysql.com/doc/refman/8.0/en/nested-loop-joins.html
 
