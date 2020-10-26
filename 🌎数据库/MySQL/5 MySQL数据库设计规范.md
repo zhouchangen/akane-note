@@ -1,4 +1,4 @@
-# 5 MySQL数据库设计规范
+# MySQL数据库设计规范
 
 原文：https://github.com/jly8866/archer
 

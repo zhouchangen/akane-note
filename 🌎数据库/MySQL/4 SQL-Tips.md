@@ -1,4 +1,4 @@
-# 4 SQL-Tips
+# SQL-Tips
 
 
 
