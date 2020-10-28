@@ -68,17 +68,15 @@ Java消息服务，基于JVM消息代理的规范。ActiveMQ、HornetMQ是JMS实
 - Producer：消息生产者
 - Consumer：消息消费者
 
-  
 - Exchange：消息交换机，它指定消息按什么规则，路由哪个队列。类似我们的路由器
 - Queue：消息队列载体，每个消息都会被投入到一个或多个队列
 - Binding： 绑定。作用是：把exchange和Queue按照路由规则绑定起来
 - Routing Key： 路由关键字，exchange根据这个关键字进行消息投递
 
-  
 - Connection：网络连接，比如一个TCP连接
 - Channel：信道，多路复用连接中的一条独立的双向数据流通道，减少连接的创建和销毁。消息通道，在客户端的每个连接里，可以建立多个channel，每个channel代表一个会话任务
 - 
-- VHost：虚拟主机，表示一批交换器、消息队列和相关对象。每个虚拟主机本质上就像是一个独立的mini版本的RabbitMQ。一个broker里可以开设多个vhost，用作不同用户的权限分离，默认是/，通过路径划分。
+- VHost：虚拟主机，表示一批交换器、消息队列和相关对象。每个虚拟主机本质上就像是一个独立的mini版本的RabbitMQ。一个broker里可以开设多个vhost，用作不同用户的权限分离，**默认是/，通过路径划分**。
 - Broker: 消息代理，消息服务器实体
 
 
