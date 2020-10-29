@@ -2,9 +2,9 @@
 
 
 
-## 1、重复数据保留一条
+## 1 重复数据保留一条
 
-```
+```mysql
 delete from goods_country
 where (goods_no,country) in (
     select a.goods_no, a.country from (
@@ -22,7 +22,7 @@ and tid not in (
 
 
 
-## 2、存储过程，生成自增值
+## 2 存储过程，生成自增值
 
 ```mysql
 delimiter ;;
@@ -42,17 +42,20 @@ call proc_batch_insert();
 
 
 
-## 3、插入重复问题
+## 3 插入重复问题
 
-```
+```mysql
 insert ignore into table
+
+INSERT INTO XXX ON DUPLICATE KEY UPDATE
 ```
 
+- ignore：只关注主键对应记录是不存在，无则添加，有则忽略
+- ON DUPLICATE KEY UPDATE：有则更新指定列，无则添加
 
 
-## 4、统计每天单量
 
-
+## 4 统计每天单量
 
 ```mysql
 -- 日均单量 365天
@@ -73,7 +76,7 @@ group by DATE_FORMAT(create_time,'%Y-%m-%d')
 
 
 
-## 5、GROUP_CONCAT
+## 5 GROUP_CONCAT
 
 GROUP_CONCAT将组中的字符串连接成为具有各种选项的单个字符串。
 
@@ -96,7 +99,7 @@ INSERT INTO t(v) VALUES('A'),('B'),('C'),('B');
 
 
 
-## 6、\G
+## 6 \G
 
 表示将查询结果进行按列打印，可以使每个字段打印到单独的行。即**将查到的结构旋转90度变成纵向；**
 
@@ -130,6 +133,10 @@ username: MF99999
 ```
 
 
+
+### 7 select 1
+
+select 1返回成功， 说明数据库的进程还在
 
 
 

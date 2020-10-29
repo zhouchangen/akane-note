@@ -6,6 +6,8 @@
 
 一些内容来源：https://github.com/bjmashibing/InternetArchitect 和 MySQL实战45讲 -林晓斌 网名丁奇，前阿里资深技术专家
 
+在官方文档中，也有很多有趣的内容：https://dev.mysql.com/doc/refman/8.0/en/glossary.html
+
 
 
 ## MySQL知识
@@ -41,9 +43,11 @@
 
 建立连接的过程通常是比较复杂的，所以我建议你在使用中要尽量减少建立连接的动作，也就是尽量使用长连接。但是全部使用长连接后，你可能会发现，有些时候 MySQL 占用内存涨得特别快，这是因为 MySQL 在执行过程中临时使用的内存是管理在连接对象里面的。
 
-如何解决长连接占用资源问题？
 
-**定期断开长连接。使用一段时间，或者程序里面判断执行过一个占用内存的大查询后，断开连接，之后要查询再重连。**
+
+**如何解决长连接占用资源问题？**
+
+定期断开长连接。使用一段时间，或者程序里面判断执行过一个占用内存的大查询后，断开连接，之后要查询再重连。其实也就是使用我们的连接池。
 
 
 
@@ -153,7 +157,7 @@ MySQL 把每个 BLOB 和 TEXT 值当作一个独立的对象处理。两者都�
 #### datetime和timestamp
 
 - datetime：**占用8个字节，与时区无关**，可保存到毫米
-- timestamp：**占用4个字节，与时区有关**，精确到秒，采用整型存储。保存时间范围：1970-01-01到**2038-01-19**
+- timestamp：**占用4个字节，与时区有关**，精确到秒。因为是用采用整型存储，因此保存时间范围：1970-01-01到**2038-01-19**
 
 
 
@@ -207,7 +211,7 @@ join的本质是嵌套循环，因此建议是**小表join大表**，因为如�
 
 1. Join Buffer会缓存**所有参与查询的列**而不是只有Join的列
 2. 可以通过调整join_buffer_size缓存大小，默认262144，即：256k
-3. join_buffer_size的最大值在MySQL 5.1.22版本前是4G-1，而之后的版本才能在64位操作系统下申请大于4G的Join Buffer空间
+3. join_buffer_size的最大值在MySQL 5.1.22版本前是4G，而之后的版本才能在64位操作系统下申请大于4G的Join Buffer空间
 4. 使用Block Nested-Loop Join算法需要开启优化器管理配置的optimizer_switch的设置block_nested_loop为on，默认为开启
 
 ![block-nested-loop-join.png](images/block-nested-loop-join.png)
@@ -716,15 +720,19 @@ query_cache_type
 
 
 
-### INNODB
+### InnoDB
 
-innodb_buffer_pool_size=
-该参数指定大小的内存来缓冲数据和索引，最大可以设置为物理内存的80%。[Innodb_pool_size](https://www.cnblogs.com/wanbin/p/9530833.html)
+innodb_buffer_pool_size
+该参数指定大小的内存来缓冲数据和索引，最大可以设置为物理内存的80%。
+
+文章：[Innodb_pool_size](https://www.cnblogs.com/wanbin/p/9530833.html)
 
 
 
 innodb_flush_log_at_trx_commit
 主要控制innodb将log buffer中的数据写入日志文件并flush磁盘的时间点，值分别为**0，1，2**
+
+注：【重要的日志】一章中将会介绍
 
 
 
@@ -759,18 +767,45 @@ mysql随机读的缓冲区大小
 
 
 innodb_file_per_table
-此参数确定为每张表分配一个新的文件
+此参数确定为每张表分配一个新的文件。**表数据既可以存在共享表空间里，也可以是单独的文件。**
 
 
 
 ## 存储过程插入数据过慢
 
+当我们在测试数据库时，可能需要使用存储过程生产临时数据。那么可以进行 双”0“设置
+
 ```mysql
-set sync_bin=0;set innodb_flush_log_at_trx_commit=0
+set sync_bin=0;
+set innodb_flush_log_at_trx_commit=0
 select GLOBAL STATUS like 'innodb_page_size'
 ```
 
+原因：【重要的日志】一章中将会介绍
 
 
 
+## 不同的 count 用法
 
+count(*)、count(主键 id)、count(字段) 和 count(1) 
+
+- **count(主键 id) **：InnoDB 引擎会遍历整张表，把每一行的 id 值都取出来，返回给 server 层。server 层拿到 id 后，判断是不可能为空的，就按行累加。
+
+- **count(1)**：InnoDB 引擎遍历整张表，但不取值。server 层对于返回的每一行，放一个数字“1”进去，判断是不可能为空的，按行累加。
+
+- **count(字段) **：
+
+- - 如果这个“字段”是定义为 not null 的话，一行行地从记录里面读出这个字段，判断不能为 null，按行累加；
+  - 如果这个“字段”定义允许为 null，那么执行的时候，判断到有可能是 null，还要把值取出来再判断一下，不是 null 才累加。
+  
+- **count(\*)**：是个例外，并不会把全部字段取出来，而是**专门做了优化**，不取值。
+
+
+
+count(1) 与 count(主键 id) 
+
+count(1) 执行得要比 count(主键 id) 快。因为从引擎返回 id 会涉及到解析数据行，以及拷贝字段值的操作。
+
+
+
+结论：按照效率排序的话，count(字段) < count(主键 id) < count(1) ) ≈count(\*)
