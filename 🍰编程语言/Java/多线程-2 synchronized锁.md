@@ -65,7 +65,9 @@ class T{
 
 什么是可重入锁？
 
-JVM允许**同一个线程**重复获取同一个锁，这种能被同一个线程反复获取的锁，就叫做可重入锁。
+可重入锁：同一个线程**重复**获取同一个锁。
+
+同⼀个线程每次获取锁，**锁的计数器都⾃增1**，等到锁的计数器下降为0时才能释放锁。
 
 因此，如果t1调用时，已经获得当前类的锁，再调用t2时发现需要锁，这个时候如果不能重复获取锁的话就会造成死锁了。所以synchronized是支持可重入的。
 
@@ -106,6 +108,8 @@ public synchronized void t1() {
 ### synchronized的实现原理-对象头
 
 我们知道sync锁定的是class实例，也就是对象。JVM通过在对象头中进行标记，表示是否占有锁。sync会有锁升级的一个概念。
+
+ 对象头源码详解：https://blog.csdn.net/baidu_28523317/article/details/104453927
 
 
 
@@ -187,6 +191,164 @@ sync(Object)
 2. 第一个线程访问，markword 记录这个线程ID （偏向锁），如果后面还是这个线程，就不用加锁
 3. 如果后面是其它线程，线程争用：锁升级为轻量级锁， 自旋锁
 4. 默认自旋10次，10次后未获取到锁，升级为重量级锁（系统锁），进入等待队列
+
+
+
+### 锁升级测试
+
+```java
+package com.example.thread.other;
+
+import org.openjdk.jol.info.ClassLayout;
+
+import java.util.concurrent.TimeUnit;
+
+public class JavaObjectLayout {
+
+    public static void main(String[] args) throws InterruptedException{
+        final A a = new A();
+        ClassLayout layout = ClassLayout.parseInstance(a);
+        System.out.println("****Fresh object");
+        // 当没遇到synchronized时，就是无锁状态
+        // 第一个线程访问，markword 记录这个线程ID （偏向锁），如果后面还是这个线程，就不用加锁
+        System.out.println(layout.toPrintable());// 01, 无锁可偏向，00000 0 01
+
+        Thread t = new Thread(() -> {
+            synchronized (a){
+                try {
+                    TimeUnit.SECONDS.sleep(10);
+                }catch (InterruptedException e){
+                    return;
+                }
+            }
+        });
+        t.start();
+
+
+        TimeUnit.SECONDS.sleep(1);
+
+        System.out.println("****Before the lock");
+        // 如果后面是其它线程，线程争用：锁升级为轻量级锁， 自旋锁
+        System.out.println(layout.toPrintable());// 00, 轻量级锁，11111 0 00
+
+		// 默认自旋10次，10次后未获取到锁，升级为重量级锁（系统锁），进入等待队列
+        synchronized (a){
+            System.out.println("****With the lock");
+            System.out.println(layout.toPrintable());// 10, 重量级锁，11011 0 10
+        }
+
+        System.out.println("****After the lock");
+        System.out.println(layout.toPrintable());// 10, 锁不会降级
+
+        System.gc();
+
+        System.out.println("****After System.gc()");
+        System.out.println(layout.toPrintable());// 如果非11，可能未gc
+
+    }
+}
+
+
+class A{
+
+}
+```
+
+
+
+**大小端**
+
+查看结果之前，认识一下大小端
+
+- 大端是高字节存放到内存的低地址
+
+- 小端是高字节存放到内存的高地址
+
+
+
+
+高数据位，低数据位：0000 0000 0001 0011。左是高数据位，右是低数据位。
+
+高地址位，低地址位：比如一个四字节内存0x10 0x20 0x30 0x40。左是低地址位，右是高地址位。根据地址的高低判断。
+
+
+
+大小端其实就是系统对数据在内存中的存储规则。因此我们的数据分为两种方式存储。
+
+大端模式（Big-endian）存储：数据的低数据位 放在 内存的高地址位。**这和我们的阅读习惯一样。**
+
+小端模式（Little-endian）存储： 数据的低数据位 放在 内存的低地址位。
+
+
+
+记住：一般我们的都是小端，和我们的阅读习惯不一样。
+
+
+
+**输出结果**
+
+![image.png](images/java9.png)
+
+![image.png](H:/akane-note/🍰编程语言/Java/images/java10.png)
+
+
+
+```
+# WARNING: Unable to attach Serviceability Agent. You can try again with escalated privileges. Two options: a) use -Djol.tryWithSudo=true to try with sudo; b) echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+****Fresh object
+com.example.thread.other.A object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           92 c3 00 f8 (10010010 11000011 00000000 11111000) (-134167662)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+****Before the lock
+com.example.thread.other.A object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           f8 ed 01 20 (11111000 11101101 00000001 00100000) (536997368)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           92 c3 00 f8 (10010010 11000011 00000000 11111000) (-134167662)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+****With the lock
+com.example.thread.other.A object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           da 07 ef 1c (11011010 00000111 11101111 00011100) (485427162)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           92 c3 00 f8 (10010010 11000011 00000000 11111000) (-134167662)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+****After the lock
+com.example.thread.other.A object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           da 07 ef 1c (11011010 00000111 11101111 00011100) (485427162)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           92 c3 00 f8 (10010010 11000011 00000000 11111000) (-134167662)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+****After System.gc()
+com.example.thread.other.A object internals:
+ OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+      0     4        (object header)                           09 00 00 00 (00001001 00000000 00000000 00000000) (9)
+      4     4        (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+      8     4        (object header)                           92 c3 00 f8 (10010010 11000011 00000000 11111000) (-134167662)
+     12     4        (loss due to the next object alignment)
+Instance size: 16 bytes
+Space losses: 0 bytes internal + 4 bytes external = 4 bytes total
+
+Disconnected from the target VM, address: '127.0.0.1:61021', transport: 'socket'
+
+Process finished with exit code 0
+```
 
 
 

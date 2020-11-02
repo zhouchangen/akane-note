@@ -1,144 +1,5 @@
 # 多线程-1并发模型之Java多线程
 
-深入浅出Java多线程 http://concurrent.redspider.group/
-
-
-
-廖雪峰老师Java教程 https://www.liaoxuefeng.com/wiki/1252599548343744/1304521607217185
-
-
-
-JUC：java.util.concurrent
-
-
-
-
-
-## 五 Java线程间的通信
-
-### 5.1 线程通信
-
-在Java中，锁的概念都是基于**对象**的，所以我们又经常称它为对象锁。
-
-
-
-### 5.2 锁与同步
-
-**线程同步**
-
-线程同步是线程之间按照**一定的顺序**执行。
-
-```
-synchronized
-```
-
-
-
-### 5.3 等待/通知机制
-
-Java多线程的等待/通知机制是基于Object类的wait()方法和notify(), notifyAll()方法来实现的。
-
-
-
-### 5.4 信号量 - volatile
-
-JDK提供了一个类似于“信号量”功能的类Semaphore。但本文不是要介绍这个类，而是介绍一种基于volatile关键字的自己实现的信号量通信。
-
-
-
-volitile关键字能够保证内存的可见性，如果用volitile关键字声明了一个变量，在一个线程里面改变了这个变量的值，那其它线程是立马可见更改后的值的。
-
-
-
-但不保证原子性
-
-![image.png](images/java30.png)
-
-
-
-### 5.5 管道
-
-管道是基于“管道流”的通信方式。JDK提供了PipedWriter、 PipedReader、 PipedOutputStream、 PipedInputStream。其中，前面两个是基于字符的，后面两个是基于字节流的。
-
-
-
-
-
-### 5.8 ThreadLocal
-
-可以看到，虽然两个线程使用的同一个ThreadLocal实例（通过构造方法传入），但是它们各自可以存取自己当前线程的一个值。
-
-那ThreadLocal有什么作用呢？如果只是单纯的想要线程隔离，在每个线程中声明一个私有变量就好了呀，为什么要使用ThreadLocal？
-
-如果开发者希望将类的某个静态变量（user ID或者transaction ID）与线程状态关联，则可以考虑使用ThreadLocal。
-
-
-
-简单说ThreadLocal就是一种以空间换时间的做法，在每个Thread里面维护了一个以开地址法实现的ThreadLocal.ThreadLocalMap，把数据进行隔离，数据不共享，自然就没有线程安全方面的问题了
-
-
-
-**ThreadLocal原理**
-
-ThreadLocal 内部维护的是⼀个类似 Map 的 ThreadLocalMap 数据结构， key 为当前对象的 Thread 对象，值为 Object 对象。
-
-```
-public class Thread implements Runnable {
- ......
-//与此线程有关的ThreadLocal值。由ThreadLocal类维护
-ThreadLocal.ThreadLocalMap threadLocals = null;
-//与此线程有关的InheritableThreadLocal值。由InheritableThreadLocal类维护
-ThreadLocal.ThreadLocalMap inheritableThreadLocals = null;
- ......
-}
-
-public void set(T value) {
-     Thread t = Thread.currentThread();
-     ThreadLocalMap map = getMap(t);
-     if (map êX null)
-        map.set(this, value);
-     else
-        createMap(t, value);
-     }
-     ThreadLocalMap getMap(Thread t) {
-     return t.threadLocals;
- }
-```
-
-**ThreadLocal 内存泄露问题**
-
-ThreadLocalMap 中使⽤的 key 为 ThreadLocal 的弱引⽤,⽽ value 是强引⽤。所以，如果 ThreadLocal 没有被外部强引⽤的情况下，在垃圾回收的时候，**key 会被清理掉，⽽ value 不会被 清理掉**。这样⼀来， ThreadLocalMap 中就会出现**key为null的Entry**。假如我们不做任何措施的话， value 永远⽆法被GC 回收，这个时候就可能会产⽣内存泄露。ThreadLocalMap实现中已经考虑了这种 情况，在调⽤ set() 、 get() 、 remove() ⽅法的时候，会清理掉 key 为 null 的记录。**使⽤完 ThreadLocal ⽅法后 最好⼿动调⽤ remove() ⽅法**
-
-```
-    static class ThreadLocalMap {
-
-        /**
-         * The entries in this hash map extend WeakReference, using
-         * its main ref field as the key (which is always a
-         * ThreadLocal object).  Note that null keys (i.e. entry.get()
-         * == null) mean that the key is no longer referenced, so the
-         * entry can be expunged from table.  Such entries are referred to
-         * as "stale entries" in the code that follows.
-         */
-        static class Entry extends WeakReference<ThreadLocal<?>> {
-            /** The value associated with this ThreadLocal. */
-            Object value;
-
-            Entry(ThreadLocal<?> k, Object v) {
-                super(k);
-                value = v;
-            }
-        }
-```
-
-
-
-
-
-
-
-## 七 重排序与happens-before
-
 
 
 
@@ -169,10 +30,6 @@ as-if-serial语义保证单线程内重排序后的执行结果和程序代码�
 ### 8.3 happens-before规则
 
 是一个给程序员使用的规则，只要程序员在写代码的时候遵循happens-before规则，JVM就能保证指令在多线程之间的顺序性符合程序员的预期。
-
-
-
-
 
 
 
@@ -257,47 +114,7 @@ AQS核⼼思想是，如果被请求的共享资源空闲，则将当前请求�
 
 
 
-### 11.5 ReentrantLock - 可重入锁
 
-说明：Java的synchronized锁是可重入锁
-
-JVM允许同一个线程重复获取同一个锁，这种能被同一个线程反复获取的锁，就叫做可重入锁
-
-
-
-**可重入锁**
-
-“可重⼊锁”概念是：⾃⼰可以再次获取⾃⼰的内部锁。⽐如⼀个线程获得了某个对 象的锁，**此时这个对象锁还没有释放，当其再次想要获取这个对象的锁的时候还是可以获取的**，如果不 可锁重⼊的话，就会造成死锁。同⼀个线程每次获取锁，锁的计数器都⾃增1，所以要等到锁的计数器 下降为0时才能释放锁。
-
-
-
-1. ReentrantLock是可重入锁，它和synchronized一样，一个线程可以多次获取同一个锁。
-2. 和synchronized不同的是，ReentrantLock可以尝试获取锁：
-3. synchronized会死锁，使用ReentrantLock比直接使用synchronized更安全，线程在tryLock()失败的时候不会导致死锁。ReentrantLock可以对获取锁的等待时间进行设置，这样就避免了死锁（
-4. ReentrantLock可以获取各种锁的信息
-5. ReentrantLock可以灵活地实现多路通知
-
-
-
-另外，二者的锁机制其实也是不一样的。ReentrantLock底层调用的是Unsafe的park方法加锁，synchronized操作的应该是对象头中mark word。
-
-
-
-相⽐synchronized，ReentrantLock增加了⼀些⾼级功能。主要来说主要有三点：
-
-①等待可中断；
-
-②可 实现公平锁；
-
-③可实现选择性通知（锁可以绑定多个条件）
-
-
-
-**ReentrantLock提供了⼀种能够中断等待锁的线程的机制**，通过lock.lockInterruptibly()来实 现这个机制。也就是说正在等待的线程可以选择放弃等待，改为处理其他事情。 
-
-**ReentrantLock可以指定是公平锁还是⾮公平锁**。⽽synchronized只能是⾮公平锁。**所谓的公平 锁就是先等待的线程先获得锁**。 ReentrantLock默认情况是⾮公平的，可以通过 ReentrantLock 类的 ReentrantLock(boolean fair) 构造⽅法来制定是否是公平的。 
-
-**synchronized关键字与wait()和notify()/notifyAll()⽅法相结合可以实现等待/通知机制**， ReentrantLock类当然也可以实现，但是需要借助于**Condition**接⼝与newCondition() ⽅法。 Condition是JDK1.5之后才有的，它具有很好的灵活性，⽐如可以实现多路通知功能也就是在⼀ 个Lock对象中可以创建多个Condition实例（即对象监视器），线程对象可以注册在指定的 Condition中，从⽽可以有选择性的进⾏线程通知，在调度线程上更加灵活。 在使⽤ notify()/notifyAll()⽅法进⾏通知时，被通知的线程是由 JVM 选择的，⽤ReentrantLock类结 合Condition实例可以实现“选择性通知” ，这个功能⾮常重要，⽽且是Condition接⼝默认提供 的。⽽synchronized关键字就相当于整个Lock对象中只有⼀个Condition实例，所有的线程都注 册在它⼀个身上。如果执⾏notifyAll()⽅法的话就会通知所有处于等待状态的线程这样会造成 很⼤的效率问题，⽽Condition实例的signalAll()⽅法 只会唤醒注册在该Condition实例中的所 有等待线程。
 
 
 
