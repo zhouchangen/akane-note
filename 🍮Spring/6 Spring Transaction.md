@@ -776,7 +776,7 @@ if (transManager.getTransaction(transDefinition).isRollbackOnly()) {
 
 ## @Transactional常见问题
 
-- @Transactional注解标注方法修饰符为**非public**时，@Transactional注解将会不起作用。
+- @Transactional注解标注方法修饰符为**非public**时，不会创建代理对象，因此@Transactional注解将会不起作用。org.springframework.transaction.interceptor.AbstractFallbackTransactionAttributeSource#computeTransactionAttribute
 - 在类内部调用调用类内部@Transactional标注的方法。这种情况下也会导致事务不开启。
 - 事务方法内部捕捉了异常，没有抛出新的异常，导致事务操作不会进行回滚。
 

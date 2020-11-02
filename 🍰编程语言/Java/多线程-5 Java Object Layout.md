@@ -1,8 +1,14 @@
-# 多线程-4 Java Object Layout
+# 多线程 - Java Object Layout
+
+
+
+锁升级测试
+
+
 
 ### Code
 
-```
+```java
 package com.example.thread.other;
 
 import org.openjdk.jol.info.ClassLayout;
