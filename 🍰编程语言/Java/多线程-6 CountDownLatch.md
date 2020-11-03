@@ -9,7 +9,7 @@ CountDown代表计数递减，Latch是“门闩”（mén shuān ）的意思。
 
 
 
-用途：等待一些线程执行结束后，才开始执行本线程的任务。
+用途：等待一些线程执行结束后，才开始执行本线程的任务。例如：压测的时候，写单元测试可以用来模拟并发，等多少线程才开始执行。
 
 - CountDownLatch countDownLatch = new CountDownLatch(3);初始化总数 
 - countDownLatch.countDown(); 每调用一次减1

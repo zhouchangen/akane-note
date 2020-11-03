@@ -134,9 +134,18 @@ username: MF99999
 
 
 
-### 7 select 1
+## 7 select 1
 
 select 1返回成功， 说明数据库的进程还在
 
 
+
+## 8 字符串截取的坑
+
+如果substring是从0开始，则最后为空，应该从1开始
+
+```mysql
+ update user set username = substring(username,1 ,5);
+ 
+```
 

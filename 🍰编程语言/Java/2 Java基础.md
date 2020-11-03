@@ -1,5 +1,3 @@
-
-
 # 2 Java基础
 
 ## 1 Java常用关键字
@@ -811,6 +809,110 @@ https://www.javazhiyin.com/13546.html
 ### 2.13 Intern
 
 [使用String.intern() 优化内存](https://blog.csdn.net/zhaizu/article/details/39785085)
+
+
+
+### 2.14 hashMap
+
+1.7并发rehash会造成循环链表，但1.8解决了
+
+
+
+### 2.15 ConcurrentHashMap
+
+ConcurrentHashMap是如何解决并发的？
+
+https://cloud.tencent.com/developer/article/1443877
+
+1.7用的分段锁，1.8用的是synchronized和CAS
+
+- synchronized：锁的首个节点
+- addCount：主要是为了扩容，利用的是CAS。注意addCount不在synchronized代码块里
+
+```java
+public V put(K key, V value) {
+        return putVal(key, value, false);
+    }
+
+    final V putVal(K key, V value, boolean onlyIfAbsent) {
+    if (key == null || value == null) throw new NullPointerException();
+    int hash = spread(key.hashCode());//对hashCode进行再散列，算法为(h ^ (h >>> 16)) & HASH_BITS
+    int binCount = 0;
+ //这边加了一个循环，就是不断的尝试，因为在table的初始化和casTabAt用到了compareAndSwapInt、compareAndSwapObject
+    //因为如果其他线程正在修改tab，那么尝试就会失败，所以这边要加一个for循环，不断的尝试
+    for (Node<K,V>[] tab = table;;) {
+        Node<K,V> f; int n, i, fh;
+        // 如果table为空，初始化；否则，根据hash值计算得到数组索引i，如果tab[i]为空，直接新建节点Node即可。注：tab[i]实质为链表或者红黑树的首节点。
+        if (tab == null || (n = tab.length) == 0)
+            tab = initTable();
+
+        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+            if (casTabAt(tab, i, null,
+                         new Node<K,V>(hash, key, value, null)))
+                break;                   // no lock when adding to empty bin
+        }
+        // 如果tab[i]不为空并且hash值为MOVED(-1)，说明该链表正在进行transfer操作，返回扩容完成后的table。
+        else if ((fh = f.hash) == MOVED)
+            tab = helpTransfer(tab, f);
+        else {
+            V oldVal = null;
+            // 针对首个节点进行加锁操作，而不是segment，进一步减少线程冲突
+            synchronized (f) {
+                if (tabAt(tab, i) == f) {
+                    if (fh >= 0) {
+                        binCount = 1;
+                        for (Node<K,V> e = f;; ++binCount) {
+                            K ek;
+                            // 如果在链表中找到值为key的节点e，直接设置e.val = value即可。
+                            if (e.hash == hash &&
+                                ((ek = e.key) == key ||
+                                 (ek != null && key.equals(ek)))) {
+                                oldVal = e.val;
+                                if (!onlyIfAbsent)
+                                    e.val = value;
+                                break;
+                            }
+                            // 如果没有找到值为key的节点，直接新建Node并加入链表即可。
+                            Node<K,V> pred = e;
+                            if ((e = e.next) == null) {
+                                pred.next = new Node<K,V>(hash, key,
+                                                          value, null);
+                                break;
+                            }
+                        }
+                    }
+                    // 如果首节点为TreeBin类型，说明为红黑树结构，执行putTreeVal操作。
+                    else if (f instanceof TreeBin) {
+                        Node<K,V> p;
+                        binCount = 2;
+                        if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
+                                                       value)) != null) {
+                            oldVal = p.val;
+                            if (!onlyIfAbsent)
+                                p.val = value;
+                        }
+                    }
+                }
+            }
+            if (binCount != 0) {
+                // 如果节点数>＝8，那么转换链表结构为红黑树结构。
+                if (binCount >= TREEIFY_THRESHOLD)
+                    treeifyBin(tab, i);
+                if (oldVal != null)
+                    return oldVal;
+                break;
+            }
+        }
+    }
+    // 计数增加1，有可能触发transfer操作(扩容)。
+    addCount(1L, binCount);
+    return null;
+}
+```
+
+
+
+
 
 
 
