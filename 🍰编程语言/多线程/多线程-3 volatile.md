@@ -285,6 +285,14 @@ public class com/example/thread/other/JustTest {
 
 
 
+### volatile 的可见性和禁止指令重排序如何实现
+
+可见性：缓存一致性协议
+
+禁止指令重排序：内存屏障
+
+
+
 ### volatile  和 synchronized
 
 synchronized：保证变量在线程之间的内存可见性，原子性，**但是不能禁止指令重排序。**（synchronized利用锁，已经保证了只有一个线程执行）

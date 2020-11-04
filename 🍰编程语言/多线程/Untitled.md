@@ -10,6 +10,14 @@
 
 
 
+交叉打印
+
+A1B2C3D4
+
+
+
+
+
 ## ThreadLocal
 
 由CAS引发的
