@@ -529,6 +529,8 @@ public class StringBuilderDemo {
 
 ### 2.5 字符串常量池
 
+https://www.jianshu.com/p/86dcd2a4dc31
+
 ```
 *
  * String是不可变类，从源码中我们可以看到用final修饰了，并且value是private final
@@ -809,6 +811,12 @@ https://www.javazhiyin.com/13546.html
 ### 2.13 Intern
 
 [使用String.intern() 优化内存](https://blog.csdn.net/zhaizu/article/details/39785085)
+
+`String#intern`方法中看到，这个方法是一个 native 的方法，但注释写的非常明了。“如果常量池中存在当前字符串, 就会直接返回当前字符串. 如果常量池中没有此字符串, 会将此字符串放入常量池中后, 再返回”。
+
+
+
+使用不当：会造成常量池过大。
 
 
 

@@ -1,4 +1,4 @@
-# 多线程 -  synchronized锁
+# 多线程 -  synchronized与锁
 
 
 
@@ -289,7 +289,7 @@ class A{
 
 ![image.png](images/java9.png)
 
-![image.png](H:/akane-note/🍰编程语言/Java/images/java10.png)
+![image.png](images/java10.png)
 
 
 

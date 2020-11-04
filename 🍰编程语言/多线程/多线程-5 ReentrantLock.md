@@ -2,7 +2,7 @@
 
 
 
-## ReentrantLock
+## ReentrantLock可重入锁
 
 ReentrantLock：重入锁的意思
 
@@ -229,7 +229,7 @@ static final class NonfairSync extends Sync {
 
 ## ReentrantLock和synchronized区别
 
-1. 和synchronized一样，ReentrantLock是支持可重入锁。本质上ReentrantLock是CAS，synchronized是锁对象头，锁升级的概念。
+1. 和synchronized一样，ReentrantLock是支持可重入锁。**本质上ReentrantLock是CAS，synchronized是锁对象头，锁升级的概念。**
 2. 和synchronized不同的是，ReentrantLock可以尝试获取锁，并且可以设置获取锁等待的时长。ReentrantLock需手动释放锁。
 3. ReentrantLock提供了一种**中断等待锁的线程**机制。
 4. ReentrantLock可以指定为公平锁和非公平锁，⽽synchronized只能是⾮公平锁。
