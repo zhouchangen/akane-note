@@ -106,7 +106,7 @@ ReentrantLock可以通过lock.lockInterruptibly()，实现中断等待锁的线�
 
 ReentrantLock可以指定为公平锁和非公平锁，⽽synchronized只能是⾮公平锁。ReentrantLock默认情况是⾮公平锁。
 
-公平锁：先等待的线程先获得锁
+公平锁：先等待的线程先获得锁，本质上是有一个等待队列
 
 ```java
 private final Lock lock = new ReentrantLock(true);
@@ -127,10 +127,95 @@ private final Lock lock = new ReentrantLock(true);
      *
      * @param fair {@code true} if this lock should use a fair ordering policy
      */
-    public ReentrantLock(boolean fair) {
+    public ReentrantLock(boolean fair) { 
         sync = fair ? new FairSync() : new NonfairSync();
     }
 
+```
+
+
+
+### 示例5：等待通知机制
+
+ReentrantLock同样提供了等待/通知机制（锁可以绑定**多个条件，多个Condition**），更灵活。
+
+而synchronized只能有**一个**对象（synchronized一个对象，wait和notify）。
+
+
+
+```java
+/**
+ * 写一个固定容量同步容器，拥有put和get方法，以及getCount方法，能够支持2个生产者线程以及10个消费者线程阻塞调用
+ * @param <T>
+ */
+public class ContainerDemo<T> {
+
+    final private LinkedList<T> lists = new LinkedList<>();
+    final private int MAX = 10;
+    private int count = 0;
+
+    private Lock lock = new ReentrantLock();
+    private Condition producer = lock.newCondition();
+    private Condition consumer = lock.newCondition();
+
+    public void put(T t){
+        try {lock.lock();
+            while (lists.size() == MAX){
+                producer.await(); // 阻塞生产者
+            }
+            lists.add(t);
+            ++count;
+            consumer.signalAll(); // 通知消费者进行消费
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    public T get(){
+        T t = null;
+        try {lock.lock();
+            while (lists.size() == 0){
+                consumer.await(); // 阻塞消费者者
+            }
+            t = lists.removeFirst();
+            count--;
+            producer.signalAll(); // 通知生产者者进行生产
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally {
+            lock.unlock();
+        }
+        return t;
+    }
+
+    public static void main(String[] args) {
+        ContainerDemo<String> c = new ContainerDemo<>();
+        // consumer
+        for (int i = 0; i < 10; i++) {
+            new Thread(() -> {
+                for (int j = 0; j < 5; j++) {
+                    System.out.println(c.get());
+                }
+            }).start();
+        }
+
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < 2; i++) {
+            new Thread(() -> {
+                for (int j = 0; j < 25; j++) {
+                    c.put(Thread.currentThread().getName() +" " + j);
+                }
+            }, "p"+i).start();
+        }
+    }
+}
 ```
 
 
@@ -233,78 +318,4 @@ static final class NonfairSync extends Sync {
 2. 和synchronized不同的是，ReentrantLock可以尝试获取锁，并且可以设置获取锁等待的时长。ReentrantLock需手动释放锁。
 3. ReentrantLock提供了一种**中断等待锁的线程**机制。
 4. ReentrantLock可以指定为公平锁和非公平锁，⽽synchronized只能是⾮公平锁。
-
-
-
-
-
-③可实现选择性通知（锁可以绑定多个条件）
-
-
-
-**synchronized关键字与wait()和notify()/notifyAll()⽅法相结合可以实现等待/通知机制**， ReentrantLock类当然也可以实现，但是需要借助于**Condition**接⼝与newCondition() ⽅法。 Condition是JDK1.5之后才有的，它具有很好的灵活性，⽐如可以实现多路通知功能也就是在⼀ 个Lock对象中可以创建多个Condition实例（即对象监视器），线程对象可以注册在指定的 Condition中，从⽽可以有选择性的进⾏线程通知，在调度线程上更加灵活。 在使⽤ notify()/notifyAll()⽅法进⾏通知时，被通知的线程是由 JVM 选择的，⽤ReentrantLock类结 合Condition实例可以实现“选择性通知” ，这个功能⾮常重要，⽽且是Condition接⼝默认提供 的。⽽synchronized关键字就相当于整个Lock对象中只有⼀个Condition实例，所有的线程都注 册在它⼀个身上。如果执⾏notifyAll()⽅法的话就会通知所有处于等待状态的线程这样会造成 很⼤的效率问题，⽽Condition实例的signalAll()⽅法 只会唤醒注册在该Condition实例中的所 有等待线程。
-
-
-
-示例：
-
-```java
-/**
- * 可重入锁 ReentrantLock 示例
- * Re entrant Lock
- *
- *
- * 说明：Java的synchronized锁是可重入锁
- * JVM允许同一个线程重复获取同一个锁，这种能被同一个线程反复获取的锁，就叫做可重入锁
- */
-public class ReentrantLockDemo {
-
-    // 1. ReentrantLock是可重入锁，它和synchronized一样，一个线程可以多次获取同一个锁。
-    // 2. 和synchronized不同的是，ReentrantLock可以尝试获取锁：
-    // 3. 使用ReentrantLock比直接使用synchronized更安全，线程在tryLock()失败的时候不会导致死锁
-    private final Lock lock = new ReentrantLock();
-
-    private final Condition condition = lock.newCondition();
-    private Queue<String> queue = new LinkedList<>();
-
-
-
-    public void addTask(String s){
-        lock.lock();
-        try{
-            queue.add(s);
-            // 相当于 synchronized 中的 notifyAll();
-            condition.signalAll();
-        }finally {
-            lock.unlock();
-        }
-    }
-
-    public String getTask() throws InterruptedException{
-        try{
-        	lock.lock();
-            while (queue.isEmpty()){
-                // 相当于 synchronized 中的 wait();
-                // 会释放当前锁，进入等待状态；
-                condition.await();
-            }
-            return queue.remove();
-        }finally {
-            lock.unlock();
-        }
-    }
-    
-   public static void main(String[] args) {
-
-    }
-}
-```
-
-
-
-
-
-
-
-
-
+5. ReentrantLock同样提供了等待/通知机制（锁可以绑定**多个条件，多个Condition**），更灵活。而synchronized只能有**一个**对象（synchronized一个对象)。
