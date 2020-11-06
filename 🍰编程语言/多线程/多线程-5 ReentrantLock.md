@@ -8,6 +8,8 @@ ReentrantLock：重入锁的意思
 
 ReentrantLock和synchronized一样，是可重入锁，但是却提供了更多特性，用于代替synchronized。
 
+注：有些喜欢将ReentrantLock简称为lock，比如问你lock和synchronized的区别
+
 
 
 ## 示例
@@ -137,9 +139,10 @@ private final Lock lock = new ReentrantLock(true);
 
 ### 示例5：等待通知机制
 
-ReentrantLock同样提供了等待/通知机制（锁可以绑定**多个条件，多个Condition**），更灵活。
+- ReentrantLock同样提供了等待/通知机制（锁可以绑定**多个条件，多个Condition**），更灵活。
 
-而synchronized只能有**一个**对象（synchronized一个对象，wait和notify）。
+- 而synchronized只能有**一个**对象（synchronized一个对象，wait和notify）。
+
 
 
 
@@ -314,7 +317,7 @@ static final class NonfairSync extends Sync {
 
 ## ReentrantLock和synchronized区别
 
-1. 和synchronized一样，ReentrantLock是支持可重入锁。**本质上ReentrantLock是CAS，synchronized是锁对象头，锁升级的概念。**
+1. 和synchronized一样，ReentrantLock是支持可重入锁。**本质上ReentrantLock是CAS自旋锁，synchronized是锁对象头，锁升级的概念。**
 2. 和synchronized不同的是，ReentrantLock可以尝试获取锁，并且可以设置获取锁等待的时长。ReentrantLock需手动释放锁。
 3. ReentrantLock提供了一种**中断等待锁的线程**机制。
 4. ReentrantLock可以指定为公平锁和非公平锁，⽽synchronized只能是⾮公平锁。

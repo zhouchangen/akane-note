@@ -14,13 +14,15 @@
 
 Java中的锁都是基于**对象**的，所以我们又经常称它为对象锁。
 
+注：有些人喜欢把synchronzied简称为sync，这是错误的，因为ReentrantLock中也有一个Sync，它是AQS的一种实现
+
 
 
 ### synchronized各种用法
 
 synchronized锁的是对象，既保证原子性，也保证了可见性。
 
-注意：不能用String常量、Integer、Long等基础对象，因为容易锁的同一个对象，这样很多代码用到的地方都容易造成锁等待。
+**注意**：不能用String常量、Integer、Long等基础对象，因为String有常量池缓存，容易锁的同一个对象，这样很多代码用到的地方都容易造成锁等待。
 
 ```java
 final Object o = new Object(); // 应避免锁的对象发生改变，因此加上final关键字
@@ -107,7 +109,9 @@ public synchronized void t1() {
 
 ### synchronized的实现原理-对象头
 
-我们知道sync锁定的是class实例，也就是对象。JVM通过在对象头中进行标记，表示是否占有锁。sync会有锁升级的一个概念。
+可以写一个synchronized示例，然后用javap指令查看对应的字节码。从字节码可以看到**synchronized** 同步语句块是通过**monitorenter** 和 **monitorexit** 指令实现的，当执行monitorenter指令时，会获取monitor对象，获取锁成功则计数器设置为1，释放锁则设置为0。
+
+而这个monitor对象就是存在对象头，JVM通过在对象头中进行标记，表示是否占有锁。sync会有锁升级的一个概念。
 
  对象头源码详解：https://blog.csdn.net/baidu_28523317/article/details/104453927
 
@@ -168,7 +172,7 @@ public synchronized void t1() {
 
 ### 锁升级
 
-**Java 6** 为了减少获得锁和释放锁带来的性能消耗，引入了“偏向锁”和“轻量级锁“。在Java 6 以前，所有的锁都是”重量级“锁。
+早期synchronized属于重量级锁，后来**Java 6** 为了减少获得锁和释放锁带来的性能消耗，引入了“偏向锁”和“轻量级锁“。在Java 6 以前，所有的锁都是”重量级“锁。
 
 所以在Java 6 及其以后，一个对象其实有四种锁状态，它们级别由低到高依次是：
 

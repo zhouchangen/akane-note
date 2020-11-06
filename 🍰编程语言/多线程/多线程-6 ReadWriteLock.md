@@ -2,7 +2,11 @@
 
 
 
-ReadWriteLock其实是一个共享锁和排他锁的概念。
+ReadWriteLock其实是一个**共享锁和排他锁的概念，读锁共享，写锁独占。**
+
+ReadWriteLock可以解决多线程同时读，但只有一个线程能写的问题。
+
+
 
 
 

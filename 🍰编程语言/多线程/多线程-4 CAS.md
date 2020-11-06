@@ -141,7 +141,7 @@ ABA问题的解决思路是在变量前面追加上**版本号或者时间戳**�
 
 
 
-JDK1.5开始，提供了类AtomicStampedReference（stamped：时间戳）来解决 ABA问题。
+JDK1.5开始，提供了类**AtomicStampedReference**（stamped：时间戳）来解决 ABA问题。
 
 这个类的compareAndSet方法的作用是首先检查**当前引用是否等于预期引用**，并且检查当前标志是否等于预期标志，如果二者都相等，才使用CAS设置为新的值和标志。
 
