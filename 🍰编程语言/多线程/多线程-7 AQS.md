@@ -2,7 +2,9 @@
 
 
 
-## 各种JUC同步锁
+## JUC同步锁
+
+下面列举的**同步锁**其实都是基于AQS实现的
 
 - ReentrantLock
 
@@ -39,7 +41,7 @@ AQS：AbstractQueuedSynchronizer，即抽象队列同步器
 
 ## AQS作用
 
-那AQS有什么用呢？AQS是一个用来构建锁和同步器的框架。
+那AQS有什么用呢？AQS是一个用来构建**锁和同步器**的框架。
 
 
 
@@ -69,7 +71,7 @@ CLH：Craig，Landin and Hagersten 三人的简称
 
 ### AQS的数据结构-CLH队列
 
-AQS内部使用了一个先进先出（FIFO）的双端队列（双向链表，并使用了两个指针head和tail用于标识队列的头部和尾部。
+AQS内部使用了一个先进先出（FIFO）的双端队列（双向链表），并使用了两个指针head和tail用于标识队列的头部和尾部。
 
 
 
@@ -138,6 +140,8 @@ lock.lock();
 ```
 
 
+
+#### Sync
 
 接着我们看一下这个sync是什么
 
@@ -239,7 +243,9 @@ static final class FairSync extends Sync {
 
 #### addWaiter
 
-为当前线程创建等待队列，或入队
+为当前线程创建等待队列，或入队。
+
+实现原理：使用CAS自旋锁将当前线程添加到tail
 
 mode：EXCLUSIVE排他独占模式，SHARED共享模式
 
@@ -621,3 +627,15 @@ private void unparkSuccessor(Node node) {
         LockSupport.unpark(s.thread);
 }
 ```
+
+
+
+## 总结
+
+AQS是一个抽象队列同步器，当不存在锁竞争的时候，直接获取锁。
+
+如果存在锁竞争，则会初始化一个等待队列，一种双向链表队列，简称为CLH队列。在tail入队时，使用的是无锁操作，即CAS自旋锁。这样只要锁住tail即可，而不用锁住整个链表。
+
+当入队成功后，需判断前置节点（这也是为什么使用双向链表的原理）的状态（waitStatus），如果前一个是头节点，会再次尝试获取锁，因为可能前一个执行完了。如果未获取到锁，然后设置当前线程是否应该阻塞（shouldParkAfterFailedAcquire）。
+
+当释放锁时，需要唤醒下一个节点。

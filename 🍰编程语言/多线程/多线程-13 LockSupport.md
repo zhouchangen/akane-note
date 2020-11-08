@@ -6,11 +6,12 @@
 
 
 
+用途：线程的挂起和恢复，例如：交叉打印
+
 - 叫醒指定的线程
 
 - LockSupport.unpark(t1)可以在LockSupport.park();前调用
 
-  
 
 ```java
 import java.util.concurrent.TimeUnit;

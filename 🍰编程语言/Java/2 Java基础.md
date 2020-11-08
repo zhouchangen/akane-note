@@ -706,13 +706,26 @@ import static com.example.order.ws.constant.DictBasic.GOODS_STATUS_S;
 
 
 
-### 2.11 软引用/弱引用
+### 2.11 强软用/软引用/弱引用/虚引用
 
-强引用：**new**得到的内存空间的引用
+强软弱虚 https://www.javazhiyin.com/13546.html
 
-软引用（SoftReference）：如果一个对象只具有软引用，当前虚拟机堆内存空间足够，那么垃圾回收器就不会回收它。
+强引用：**new**出来的引用
 
-弱引用（WeakReference）：如果一个对象只有弱引用（一定请注意只有弱引用，没有强引用指向时），不管当前内存空间是否足够都会回收。
+软引用（SoftReference）：如果一个对象只具有软引用，当JVM堆内存空间足够，那么垃圾回收器就不会回收它。
+
+弱引用（WeakReference）：如果一个对象只有弱引用（一定请注意只有弱引用，没有强引用指向时），不管当前内存空间是否足够，GC都会回收。
+
+虚引用：如果没有引用`a = null;`，就叫做虚引用。在任何时候都有可能被回收。
+
+```java
+        a = null; // 去掉强引用
+        System.gc(); // 显式的调用GC
+```
+
+
+
+#### 软引用和弱引用
 
 使用示例：
 
@@ -724,8 +737,8 @@ public class ReferenceTest {
         String a = new String("a");//强引用，注意是new出来的
         WeakReference<String> weakReference = new WeakReference<>(a);
         System.out.println(weakReference.get()); // a
-        a = null; // 去掉强引用
-        System.gc();
+        a = null; // 去掉强引用，没有了强引用
+        System.gc(); // 显式的调用GC
         System.out.println(weakReference.get()); // null
 
         String b = new String("b");//强引用
@@ -740,11 +753,135 @@ public class ReferenceTest {
 
 
 
-https://www.javazhiyin.com/13546.html
+#### 使用场景
 
-软引用场景：做缓存
+软引用场景：做缓存。（一般也不用，直接用redis）
 
-弱引用场景：map中的value，如ThreadLocal
+弱引用场景：一般用在容器里，map中的value，如ThreadLocal、WeakHashMap
+
+虚引用：当虚引用被回收时，就会将数据放入到ReferenceQueue队列里面，**进行通知**。用途：对象销毁后进行释放资源。
+
+
+
+#### 虚引用
+
+用途：对象销毁后进行释放资源。如：WeakHashMap释放value值
+
+清理堆外内存(DirectByteBuffer)，
+
+示例：
+
+```java
+public class PhantomReferenceTest {
+
+    private static final ReferenceQueue<User> QUEUE = new ReferenceQueue<>();
+    private static final List<byte[]> LIST = new ArrayList<>();
+    public static void main(String[] args) {
+
+        PhantomReference<User> phantomReference = new PhantomReference<>(new User("name", "url"),QUEUE);
+
+        new Thread(() -> {
+            while (true){
+                LIST.add(new byte[1024*1024*100]);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(phantomReference.get());
+            }
+        }).start();
+
+        new Thread(() -> {
+            while (true){
+                Reference<? extends User> poll = QUEUE.poll();
+                if (poll != null){
+                    System.out.println("poll" + poll); //poll.referent
+                    System.out.println("通知，虚引用被回收了");
+                }
+            }
+        }).start();
+
+    }
+}
+```
+
+
+
+#### WeakHashMap
+
+实现原理：基于WeakReference、ReferenceQueue
+
+ReferenceQueue：GC后，就会将数据放入到ReferenceQueue队列里面，**进行通知**
+
+WeakHashMap中的expungeStaleEntries清理value利用的就是ReferenceQueue
+
+https://baijiahao.baidu.com/s?id=1666368292461068600&wfr=spider&for=pc
+
+```java
+    /**
+     * The entries in this hash table extend WeakReference, using its main ref
+     * field as the key.
+     */
+    private static class Entry<K,V> extends WeakReference<Object> implements Map.Entry<K,V> {
+        V value;
+        final int hash;
+        Entry<K,V> next;
+
+        /**
+         * Creates new entry.
+         */
+        Entry(Object key, V value,
+              ReferenceQueue<Object> queue,
+              int hash, Entry<K,V> next) {
+            super(key, queue);
+            this.value = value;
+            this.hash  = hash;
+            this.next  = next;
+        }
+```
+
+
+
+使用场景：做缓存
+
+```java
+public class WeakHashMapTest {
+
+    public static void main(String[] args) {
+        WeakHashMap weakHashMap = new WeakHashMap();
+        String a = new String("a");
+        String b = new String("b");
+        weakHashMap.put(a, "aaaa");
+        weakHashMap.put(b, "bbbb");
+        sout(weakHashMap);
+        a = null;
+        b = null;
+        System.gc();
+        System.out.println("after gc");
+        sout(weakHashMap);
+    }
+
+    public static void sout(WeakHashMap weakHashMap){
+        Iterator iterator = weakHashMap.entrySet().iterator();
+        while (iterator.hasNext()){
+            Map.Entry entry = (Map.Entry)iterator.next();
+            System.out.println("key:" + entry.getKey());
+            System.out.println("value:" + entry.getValue());
+        }
+    }
+}
+```
+
+结果
+
+```
+key:a
+value:aaaa
+key:b
+value:bbbb
+after gc
+```
 
 
 
@@ -863,6 +1000,8 @@ public V put(K key, V value) {
 1.8
 
 ![image.png](images/java23.png)
+
+
 
 ### 2.15 LinkedHashMap 
 

@@ -6,9 +6,10 @@ Semaphore：信号的意思。信号量
 
 
 
-用途：限流
+用途：限流，控制并发数量
 
-顾名思义，这个工具类提供的功能就是多个线程彼此“打信号”。
+- semaphore.acquire(); 获取permit，获得锁，获取不到则阻塞
+- semaphore.release(); // 释放permit
 
 ```java
 /**
