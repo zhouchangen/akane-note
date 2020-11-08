@@ -1,4 +1,4 @@
-# ReadWriteLock与StampedLock
+# 多线程 - ReadWriteLock与StampedLock
 
 
 
@@ -105,9 +105,21 @@ write over!
 
 https://www.cnblogs.com/konck/p/9691538.html
 
-StampedLock是JDK1.8开始，号称读写锁中的性能之王。`StampedLock`提供了乐观读锁，可取代`ReadWriteLock`以进一步提升并发性能；
+ReadWriteLock可以解决多线程同时读，但只有一个线程能写的问题。
+
+但是有一个问题：如果有线程正在读，写线程**需要等待读**线程释放锁后才能获取写锁，即读的过程中不允许写，这是一种悲观的读锁。
+
+
+
+于是java8提供了一种新的读写锁：StampedLock，号称读写锁中的性能之王。
 
 Stamped时间戳的意思，利用的就是乐观锁。在CAS中提到的ABA问题，JDK1.5提供了类**AtomicStampedReference**（stamped：时间戳）来解决 ABA问题。
+
+
+
+`StampedLock`提供了乐观读锁，可取代`ReadWriteLock`以进一步提升并发性能；
+
+改进之处在于：读的过程中也允许获取写锁后写入！这样一来，读的数据就可能不一致，所以，需要额外的判断读的过程中是否有写入，这种读锁是一种乐观锁。
 
 
 
