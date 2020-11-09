@@ -24,9 +24,7 @@ ThreadLocal是一种以空间换时间的做法，把数据进行隔离，数据
 
 在**每个Thread里面维护了一个ThreadLocal.ThreadLocalMap** ，然后将数据放到这个map中。
 
-ThreadLocalMap是⼀个类似 Map的数据结构，
-
-key 为当前Thread对象里维护的ThreadLocal对象，值为 Object 对象。
+ThreadLocalMap是⼀个类似 Map的数据结构，key 为当前Thread对象里维护的ThreadLocal对象，值为 Object 对象。
 
 ```java
 public class Thread implements Runnable {
