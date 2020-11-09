@@ -408,8 +408,8 @@ StringBuffer是StringBuilder的线程安全版本，现在很少使用(廖雪峰
 
 
 
- * 并发：有处理多个任务的能力，不一定要同时。
- * 并行：有同时处理多个任务的能力。
+ * 并发concurrent：任务的提交，有处理多个任务的能力，不一定要同时。
+ * 并行parallel：任务的执行，有同时处理多个任务的能力。
 
 ```java
 public class StringBuilderDemo {
