@@ -901,12 +901,24 @@ after gc
 
 ConcurrentHashMap是如何解决并发的？https://cloud.tencent.com/developer/article/1443877
 
-答：1.7用的Segment分段锁，1.8用的是synchronized和CAS
+答：1.7用的Segment分段锁，1.8用的是synchronized和CAS。https://cloud.tencent.com/developer/article/1443877
 
-- synchronized：锁首个节点，这样只要hash不冲突，就不会产生并发
+
+
+JDK1.7使用的是分段锁
+
+分段锁就是**将数据分段，对每一段数据分配一把锁**。当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。
+
+有些方法需要跨段，比如size()、isEmpty()、containsValue()，需要锁定整个表而而不仅仅是某个段，这需要按顺序锁定所有段，操作完毕后，又按顺序释放所有段的锁。
+
+注：有点类似表锁和Next-key Lock
+
+![image.png](images/java22.png)
+
+JDK1.8使用synchronized和CAS极大的提高了HashMap的并发能力，只要做了以下两点优化：
+
+- synchronized：锁首个节点，这样**只要hash不冲突，就不会产生并发**
 - addCount：主要是为了扩容，利用的是CAS。注意addCount不在synchronized代码块里
-
-
 
 ```java
 public V put(K key, V value) {
@@ -989,23 +1001,13 @@ public V put(K key, V value) {
 }
 ```
 
-
-
-1.7
-
-![image.png](images/java22.png)
-
-
-
-1.8
-
 ![image.png](images/java23.png)
 
 
 
 ### 2.15 LinkedHashMap 
 
-实现原理：在hashMap基础上，，增加了一条双向链表，使得上面的结构可以保持键值对的插入顺序
+实现原理：在hashMap基础上，，**增加了一条双向链表**，使得上面的结构可以保持键值对的插入顺序
 
 
 ![linkedhashmap.jpg](images/linkedhashmap.jpg)
