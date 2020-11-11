@@ -82,7 +82,7 @@ GROUP_CONCAT将组中的字符串连接成为具有各种选项的单个字符�
 
 注意：当内容达到group_concat_max_len 时，会进行截取，默认是1024
 
-
+如果单纯的连接，可以用CONCAT函数，比如写一个插入或者更新数据的SQL脚本时
 
 ```mysql
 INSERT INTO t(v) VALUES('A'),('B'),('C'),('B');
@@ -143,6 +143,8 @@ select 1返回成功， 说明数据库的进程还在
 ## 8 字符串截取的坑
 
 如果substring是从0开始，则最后为空，应该从1开始
+
+当然，也可以用right，left这些函数
 
 ```mysql
  update user set username = substring(username,1 ,5);
