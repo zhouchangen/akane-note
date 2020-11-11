@@ -4,7 +4,7 @@
 
 ## JUC同步锁
 
-下面列举的**同步锁**其实都是基于AQS实现的
+下面列举的**同步锁**的实现，**原理其实都是基于AQS实现**
 
 - ReentrantLock
 
@@ -20,7 +20,6 @@
 
 - Exchanger
 
-- LockSupoort
 
 
 
@@ -73,7 +72,7 @@ CLH：Craig，Landin and Hagersten 三人的简称
 
 AQS内部使用了一个先进先出（FIFO）的双端队列（双向链表），并使用了两个指针head和tail用于标识队列的头部和尾部。
 
-
+为什么需要双向链表而不是单向？答：因为需要获取前一个的状态
 
 资源：state ，获取到锁
 
