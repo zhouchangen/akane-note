@@ -1,4 +1,4 @@
-# 3 sentinel.conf中文翻译
+# sentinel.conf中文翻译
 
 
 

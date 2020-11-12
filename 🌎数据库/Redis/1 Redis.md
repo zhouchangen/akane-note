@@ -1,4 +1,8 @@
-# 1 Redis
+# Redis
+
+**Redis**使⽤单线程的多路 **IO** 复⽤模型。
+
+
 
 ## 1 Redis常用命令
 
@@ -542,3 +546,25 @@ public class RedisTemplate<K, V> extends RedisAccessor implements RedisOperation
 ## 7 生成自增的序列
 
 以id+日期作为key，设置自增，这样就可以每天从0开始生成自增的序列了
+
+
+
+## 推荐阅读
+
+- [Redis中文网](http://www.redis.cn/documentation.html)
+- [Redis开发与运维](https://github.com/AkaneMurakawa/awesome-programming-books/blob/master/redis/Redis开发与运维.pdf)
+- [菜鸟教程-Redis](https://www.runoob.com/redis/redis-tutorial.html)
+- [狂神说Java-Redis最新超详细版教程通俗易懂](https://www.bilibili.com/video/BV1S54y1R7SB?p=1)
+- [妈妈再也不担心我面试被Redis问得脸都绿了](https://www.cnblogs.com/wmyskxz/p/12568926.html#_label2_1)
+
+
+
+## 后记
+
+要想深入了解Redis，光是了解这些肯定是不够的。这里只是引个例子，当我们想学习一门知识的时候，如何去学习。在这里，主要的学习过程是：
+
+1. 了解Redis是什么
+2. Redis的使用，包括基本的命令和企业级的开发
+3. 深入阅读Redis的配置，要想使用好Redis，那就要好好阅读其配置
+4. 有能力，可以阅读Redis官网，那里有更详细的解释
+5. 源码阅读，下载Redis的源码，我们可以看到Redis其实是C语言编写的，如果有兴趣，我们还可以看看Redis是如何实现

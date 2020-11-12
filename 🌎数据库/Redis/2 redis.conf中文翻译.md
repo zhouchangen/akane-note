@@ -1,4 +1,53 @@
-# 2 redis.conf中文翻译
+# redis.conf中文翻译
+
+
+
+## Redis配置
+
+Redis在配置文件中，将配置根据不同功能和模块进行划分，你可以按照关键字搜索阅读指定的模块，如下形式:
+
+
+
+```
+################################## INCLUDES ###################################
+
+# Include one or more other config files here.  This is useful if you
+# have a standard template that goes to all Redis servers but also need
+# to customize a few per-server settings.  Include files can include
+# other files, so use this wisely.
+```
+
+
+
+## Redis模块
+
+注：在这里整理Redis模块，有助于我们可以根据关键字快速寻找某一块的配置。
+
+- INCLUDES 引入配置文件
+- MODULES 引入模块
+- NETWORK 网络配置
+- TLS/SSL 安全连接
+- GENERAL 通常配置
+- SNAPSHOTTING 快照(俗称的RDB)
+- REPLICATION (主从)复制
+- KEYS TRACKING KEYS跟踪
+- SECURITY 安全
+- CLIENTS 客户端
+- MEMORY MANAGEMENT 内存管理
+- LAZY FREEING 懒释放(阻塞和非阻塞)
+- THREADED I/O 线程I/O
+- APPEND ONLY MODE 追加模式(APPEND ONLY FILE俗称的AOF)
+- LUA SCRIPTING LUA脚本
+- REDIS CLUSTER Redis集群
+- CLUSTER DOCKER/NAT support  DOCKER/NAT方式集群支持
+- SLOW LOG 慢查询日志
+- LATENCY MONITOR 延迟监视器
+- EVENT NOTIFICATION 事件通知
+- GOPHER SERVER 地图服务器
+- ADVANCED CONFIG 高级配置
+- ACTIVE DEFRAGMENTATION 激活碎片整理
+
+
 
 ```
 # Redis configuration file example.

@@ -1,18 +1,33 @@
 # JVM - 入门
 
+
+
+## 基础知识
+
+JVM：Java Virtual Machine，Java虚拟机
+
+
+
 class
 
 
 
-# jclasslib Bytecode Viewer
 
 
+### 字节码
+
+工具：
+
+- javap
+- jclasslib Bytecode Viewer
 
 https://plugins.jetbrains.com/plugin/9248-jclasslib-bytecode-viewer
 
+可以用直接输入javap，查看可选参数
 
+常用的是：javap -v *.class    （注：-v输出附加信息)
 
-```
+```txt
 C:\Users\AkaneMurakawa>javap
 用法: javap <options> <classes>
 其中, 可能的选项包括:
