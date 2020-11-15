@@ -102,44 +102,6 @@ JDK不同的版本，堆内存分布模型是不一样，谈内存模型不说�
 
 
 
-#### 知道类加载的过程吗？
-
-类加载过程：**加载**——>连接——>初始化。连接过程⼜可分为三步:验证——>准备——>解析
-
-**加载**——>验证——>准备——>解析——>初始化
-
-
-
-#### 知道哪些类加载器?
-
- JVM 中内置了三个重要的 ClassLoader，除了 BootstrapClassLoader 其他类加载器均由 Java 实现且 全部继承⾃ java.lang.ClassLoader ： 
-
-1. **BootstrapClassLoader**(启动类加载器) ：最顶层的加载类，由C++实现，负责加载 %JAVA_HOME%/lib ⽬录下的jar包和类或者或被 -Xbootclasspath 参数指定的路径中的所 有类。 
-
-2. **ExtensionClassLoader**(扩展类加载器) ：主要负责加载⽬录 %JRE_HOME%/lib/ext ⽬录下 的jar包和类，或被 java.ext.dirs 系统变量所指定的路径下的jar包。 
-
-3. **AppClassLoader**(应⽤程序类加载器) :⾯向我们⽤户的加载器，负责加载当前应⽤classpath下 的所有jar包和类。
-
-![image.png](images/java12.png)
-
-
-
-#### 双亲委派模型介绍 
-
-**每⼀个类都有⼀个对应它的类加载器**。系统中的 ClassLoder 在协同⼯作的时候会默认使⽤ 双亲委派 模型 。
-
-即在类加载的时候，系统会⾸先判断当前类是否被加载过。
-
-已经被加载的类会直接返回，否则 才会尝试加载。
-
-加载的时候，**⾸先会把该请求委派该⽗类加载器的 loadClass() 处理**，因此所有的 请求最终都应该传送到顶层的启动类加载器 BootstrapClassLoader 中。
-
-当⽗类加载器⽆法处理 时，才由⾃⼰来处理。**当⽗类加载器为null时，会使⽤启动类加载器 BootstrapClassLoader 作为 ⽗类加载器。**
-
-
-
-**如果我们不想⽤双亲委派模型怎么办？** 为了避免双亲委托机制，我们可以⾃⼰定义⼀个类加载器，要继承 ClassLoader，然后重载 loadClass() 即可。
-
 
 
 ## 4. JVM工具
