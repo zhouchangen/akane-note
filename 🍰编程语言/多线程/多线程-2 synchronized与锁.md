@@ -32,7 +32,7 @@ synchronized void test(){}
 // 等于
 // 因为每一次锁都创建一个对象不方便，因此最简单的就是锁住当前类实例。
 void test(){
-    synchronized(this){}
+    synchronized(this){} // this，当前类的实例
 }
 
 

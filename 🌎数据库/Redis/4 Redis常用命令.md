@@ -431,7 +431,7 @@ OK
 
 ### Geospatial
 
-底层是Zset，可以使用zset命令操作
+底层是**Zset**，可以使用zset命令操作
 
 使用场景：地理位置计算
 
