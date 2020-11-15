@@ -207,7 +207,7 @@ https://plugins.jetbrains.com/plugin/9248-jclasslib-bytecode-viewer
 
 类加载过程：
 
-1. Loading加载（双亲委派机制）
+1. Loading加载（双亲委派机制，懒加载：需要再加载）
 2. Linking连接
    1. Verification验证
    2. Preparation准备(例如：给静态变量赋默认值0)
@@ -235,7 +235,7 @@ class load
 
 
 
-### 知道哪些类加载器?
+### 有哪些类加载器?
 
  JVM 中内置了三个重要的 ClassLoader，除了 BootstrapClassLoader 其他类加载器均由 Java 实现且 全部继承⾃ java.lang.ClassLoader ： 
 
@@ -269,6 +269,8 @@ The Parent of ClassLodarDemo's ClassLoader is sun.misc.Launcher$ExtClassLoader@6
 The GrandParent of ClassLodarDemo's ClassLoader is null
 ```
 
+AppClassLoader 的⽗类加载器为 ExtClassLoader ExtClassLoader 的⽗类加载器为null，null 并不代表 ExtClassLoader 没有⽗类加载器，⽽是 Bootstrap ClassLoader 。
+
 从结果上来看，AppClassLoader和ExtClassLoader其实是Launcher的一个内部类。查看其源码发现就是在 System.getProperty()获取需要加载的类范围。
 
 ```java
@@ -285,8 +287,6 @@ public class Launcher {
             // 类加载器范围
             final String var1 = System.getProperty("java.class.path");
 ```
-
-
 
 
 
@@ -321,10 +321,163 @@ public class Launcher {
 
 ### 为什么需要双亲委派机制？
 
-- 为了安全。如果没有双亲委派机制，那我们就可以自定义类加载器，如：自定义一个java.lang.String类加载器，当客户输入账号密码时候就会存到String中，没有双亲委派机制防止的话，就可以随便拿到客户的信息。
-- 次要作用，每个类只需加载一次。
+- 为了安全，保证核心`.class`不能被篡改。如果没有双亲委派机制，那我们就可以自定义类加载器，如：自定义一个java.lang.String类加载器，当客户输入账号密码时候就会存到String中，没有双亲委派机制防止的话，就可以随便拿到客户的信息。
+- 次要作用，保证每个类只需加载一次。
+
+
+
+### 自定义类加载器
+
+场景：
+
+- JRebel**热部署**中需重新load class，Tomcat或Spring中都有相应的场景。
+- 加密class文件，防止反编译。
+
+https://www.cnblogs.com/szlbm/p/5504631.html
 
 
 
 **如果我们不想⽤双亲委派模型怎么办？** 为了避免双亲委托机制，我们可以⾃⼰定义⼀个类加载器，要继承 ClassLoader，然后重载 loadClass() 即可。
 
+1、如果不想打破双亲委派模型，那么只需要重写findClass方法即可
+
+2、如果想打破双亲委派模型，那么就重写整个loadClass方法
+
+
+
+ClassLoader源码分析
+
+下面源码分析中体现的就是双亲委派机制
+
+```java
+ protected Class<?> loadClass(String name, boolean resolve)
+        throws ClassNotFoundException
+    {
+        synchronized (getClassLoadingLock(name)) {
+            // First, check if the class has already been loaded
+            // 查找
+            Class<?> c = findLoadedClass(name);
+            if (c == null) {
+                long t0 = System.nanoTime();
+                try {
+                    if (parent != null) {
+                        // 调用父类的loadClass（递归）
+                        c = parent.loadClass(name, false);
+                    } else {
+                        c = findBootstrapClassOrNull(name);
+                    }
+                } catch (ClassNotFoundException e) {
+                    // ClassNotFoundException thrown if class not found
+                    // from the non-null parent class loader
+                }
+
+                if (c == null) {
+                    // If still not found, then invoke findClass in order
+                    // to find the class.
+                    long t1 = System.nanoTime();
+                    // 如果父类都找不到，就调用findClass, 加载
+                    c = findClass(name);
+
+                    // this is the defining class loader; record the stats
+                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                    sun.misc.PerfCounter.getFindClasses().increment();
+                }
+            }
+            if (resolve) {
+                resolveClass(c);
+            }
+            return c;
+        }
+    }
+```
+
+
+
+### 自定义类加载器示例
+
+```java
+public class Hello {
+
+    public void say(){
+        System.out.println("Hello");
+    }
+}
+// -------------------------------------------------------------------------------------------------------------------
+/**
+ * 自定义类加载器
+ */
+public class CustomerClassLoader extends ClassLoader{
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        File f = new File("D:\\project\\akane-note-collection\\jvm-note\\src\\main\\java\\", name.replace(".", "/").concat(".class"));
+        FileInputStream fis = null;
+        ByteArrayOutputStream baos = null;
+        try {
+            fis = new FileInputStream(f);
+            baos = new ByteArrayOutputStream();
+            int b = 0;
+
+            while ((b=fis.read()) != 0){
+                baos.write(b);
+            }
+            byte[] bytes = baos.toByteArray();
+            // 调用内部的一个方法
+            return defineClass(name, bytes, 0, bytes.length);
+        }catch (Exception e){
+        }finally {
+            if (baos != null){
+                try {
+                    baos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (fis != null){
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return super.findClass(name);
+    }
+
+//    @Override
+//    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+//        return super.loadClass(name, resolve);
+//    }
+
+    public static void main(String[] args) throws Exception{
+        CustomerClassLoader classLoader = new CustomerClassLoader();
+        Class<?> loadClass = classLoader.loadClass("com.example.Hello");
+        Hello instance = (Hello)loadClass.newInstance();
+        instance.say();
+
+        System.out.println(classLoader.getClass().getClassLoader());
+        System.out.println(classLoader.getParent());
+    }
+}
+```
+
+
+
+结果：
+
+```
+Hello
+sun.misc.Launcher$AppClassLoader@18b4aac2
+sun.misc.Launcher$AppClassLoader@18b4aac2
+```
+
+
+
+### 类加载执行的两种方式
+
+- 编译执行
+
+- 解释执行
+
+![混合模式.jpg](H:/akane-note/🍰编程语言/JVM/images/混合模式.jpg)
