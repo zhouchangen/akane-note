@@ -209,10 +209,10 @@ https://plugins.jetbrains.com/plugin/9248-jclasslib-bytecode-viewer
 
 1. Loading加载（双亲委派机制，懒加载：需要再加载）
 2. Linking连接
-   1. Verification验证
-   2. Preparation准备(例如：给静态变量赋默认值0)
-   3. resolution解析
-3. initializing初始化(静态变量赋值为初始值)
+   1. Verification验证 (验证文件是否符合JVM规定)
+   2. Preparation准备 (例如：给静态变量赋默认值0)
+   3. resolution解析 (将类、方法、属性等符合应用解析为直接引用。常量池中的各种符合引用解析为指针、偏移量等内存地址的直接引用)
+3. initializing初始化 (静态变量赋值为初始值)
 
 
 
@@ -341,7 +341,7 @@ https://www.cnblogs.com/szlbm/p/5504631.html
 
 1、如果不想打破双亲委派模型，那么只需要重写findClass方法即可
 
-2、如果想打破双亲委派模型，那么就重写整个loadClass方法
+2、如果想打破双亲委派模型，那么就重写整个loadClass方法。场景：热部署，osgi tomcat都有自己的模块指定classloader（可以加载同一类库的不同版本）
 
 
 
@@ -407,7 +407,18 @@ public class Hello {
 /**
  * 自定义类加载器
  */
-public class CustomerClassLoader extends ClassLoader{
+public class CustomerClassLoader extends ClassLoader{ 
+    
+    public CustomerClassLoader() {
+    }
+
+    /**
+     * 自定义父类
+     * @param parent
+     */
+    public CustomerClassLoader(ClassLoader parent) {
+        super(parent);
+    }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
@@ -481,3 +492,34 @@ sun.misc.Launcher$AppClassLoader@18b4aac2
 - 解释执行
 
 ![混合模式.jpg](H:/akane-note/🍰编程语言/JVM/images/混合模式.jpg)
+
+
+
+## 面试题
+
+类的解析过程（注：一般都不会这样写代码，纯属面试造火箭）
+
+```java
+public class ClassLoadingProcedure {
+
+    public static void main(String[] args) {
+        System.out.println(T.count);
+    }
+}
+
+class T{
+    //3
+//    public static int count = 2;
+//    public static T t = new T();
+
+    //2
+    public static T t = new T();
+    public static int count = 2;
+
+    private T(){
+        count++;
+        System.out.println("---" + count);
+    }
+}
+```
+

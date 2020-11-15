@@ -26,8 +26,34 @@
 
 在写代码时，我们偶尔会用到volatile，今天就来探究一下。volatile的作用主要有两个：
 
-- 保证变量在线程之间的内存可见性（MESI 缓存一致性协议）
+- 保证变量在线程之间的内存可见性（MESI 缓存一致性协议，MESI：Modified Exclusive Shared Invalid）（硬件实现：总线锁 bus lock）
 - 防止指令重排
+
+现代CPU的数据一致性实现 = 缓存锁（MESI、其它协议） + 总线锁
+
+读取缓存以cache line（**缓存行**）为基本单位，目前64bytes。
+
+
+
+**位于同一缓存行的不同数据，被两个不同CPU锁定，如何解决产生互相影响的伪共享问题？**
+
+https://www.cnblogs.com/cyfonly/p/5800758.html
+
+https://www.iteye.com/blog/coderplay-1486649
+
+解决：缓存行的单位是64bytes，保证其不在一个缓存行即可。使用缓存行的对齐。
+
+```java
+public static clas Padding{
+	private long p1, p2, p3, p4, p5, p6, p7;
+}
+
+static class T extens Padding{
+    public volatitle long x = 0L;
+}
+```
+
+
 
 那内存可见性和指令重排序又是什么呢？
 
@@ -116,7 +142,7 @@ class Singleton4{
     // 2.获取
     public static Singleton4 getInstance(){
         if (instance == null) {
-            synchronized (Singleton4.class){
+            synchronized (Singleton4.class){ // lock Singleton4 class 实例
                 if (instance == null) {
                     instance = new Singleton4();
                 }
@@ -134,7 +160,7 @@ class Singleton4{
 
 答：大部分时候是不存在问题。但是当锁住的是一个对象时，new一个对象是非原子性的，底层分为几条指令执行。
 
-这个时候存在一个问题：对象**还没初始化完毕**的时候，第二个线程发现对象已经不为null，就会拿来用，**此时调用这个对象的方法或者成员变量就会有问题。**
+这个时候如果发生指令重排，可能存在一个问题：对象**还没初始化完毕**的时候，第二个线程发现对象已经不为null，就会拿来用，**此时调用这个对象的方法或者成员变量就会有问题。**
 
 因此加volatile可以禁止指令重排，保证其它线程读取到的是**一个完整的对象。**
 
@@ -254,6 +280,8 @@ public class com/example/thread/other/JustTest {
 ### 什么是重排序？
 
 为了优化程序性能，编译器和处理器常常会对原有的指令执行顺序进行优化重新排序。
+
+注：读指令的同时可以同时执行不影响的其它指令，而写的同时可以进行合并写（WC Buffer，WC：Write Combined）
 
 
 
