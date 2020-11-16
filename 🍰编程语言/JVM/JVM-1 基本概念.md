@@ -491,7 +491,7 @@ sun.misc.Launcher$AppClassLoader@18b4aac2
 
 - 解释执行
 
-![混合模式.jpg](H:/akane-note/🍰编程语言/JVM/images/混合模式.jpg)
+![混合模式.jpg](images/混合模式.jpg)
 
 
 

@@ -4,7 +4,11 @@
 
 ## 起步
 
-下载`chromedriver.exe`
+注：需下载chromedriver.exe ，需对应版本：https://www.newbe.pro/Mirrors/Mirrors-ChromeDriver/
+
+
+
+示例：
 
 ```python
 from selenium import webdriver
@@ -21,6 +25,7 @@ def start(driver):
     driver.refresh()
 
 if __name__ == "__main__":
+    # 将文件放在driver路径下，相对路径
     driver = webdriver.Chrome("./driver/chromedriver.exe")
     start(driver)
     driver.close
@@ -137,4 +142,3 @@ if __name__ == "__main__":
 
 ```
 
-注：需下载chromedriver.exe ，需对应版本：https://www.newbe.pro/Mirrors/Mirrors-ChromeDriver/
