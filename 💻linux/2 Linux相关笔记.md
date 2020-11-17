@@ -41,3 +41,12 @@ sudo su
 
 
 最后提一点，"top -H -p pid"打出来的LWP是十进制的，"jps pid"打出来的本地线程号是十六进制的，转换一下，就能定位到占用CPU高的线程的当前线程堆栈了。
+
+
+
+### 3 查看最繁忙的线程
+
+```
+processid=$(top -bn 1 | grep java | head -n1 | awk '{ print $1}');threadid=$(top -Hbn 1 -p ${processid} | grep java | head -n1 | awk '{ print $1}' | xargs printf  '%x');sudo /usr/local/src/jdk1.8.0_152/bin/jstack $processid | grep "0x$threadid" -A10 --color;
+```
+

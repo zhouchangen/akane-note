@@ -84,7 +84,9 @@ systemctl status nginx   # 查看 Nginx 运行状态
 
 使用configure命令配置构建。 它定义了系统的各个方面，包括允许使用nginx进行连接处理的方法。 最后它创建一个Makefile。 configure命令支持以下参数：
 
-**--prefix = path** **- 定义将保留服务器文件的目录**。 这个同一个目录也将用于由configure(除了库源的路径)和nginx.conf配置文件中设置的所有相关路径。 它默认设置为/usr/local/nginx目录。
+**--prefix = path** **- 定义将保留服务器文件的目录**。 这个同一个目录也将用于由configure(除了库源的路径)和nginx.conf配置文件中设置的所有相关路径。 它默认设
+
+置为/usr/local/nginx目录。
 
 更多参数设置见：https://www.yiibai.com/nginx/configure.html#article-start
 
@@ -488,7 +490,7 @@ upstream backend {
 
 5）url_hash(第三方)
 
-按访问url的hash结果来分配请求，使每个url定向到同一个后端服务器，后端服务器为缓存时比较有效。 在upstream中加入hash语句，server语句中不能写入weight等其他的参数，hash_method是使用的hash算法
+按访问url的hash结果来分配请求，使每个url定向到同一个后端服务器，后端服务器为缓存时比较有效。 在upstream中加入hash语句，server语句中不能写入weight等其他的参数，hash_method是使用的hash算法。注：hash需要注意服务新增或删除问题
 
 ```
  upstream backend {
