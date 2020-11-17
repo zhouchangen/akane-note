@@ -51,6 +51,12 @@ class T{
 
 
 
+### 字节码实现
+
+monitorenter、monitorexit指令
+
+
+
 ### 可重入锁
 
 ```java

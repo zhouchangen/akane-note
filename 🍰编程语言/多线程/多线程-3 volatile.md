@@ -330,12 +330,20 @@ public class com/example/thread/other/JustTest {
 
 
 
+#### volatitle在JVM层面的实现原理
+
+volatitle内存区的读写都加屏障
+
+
+
 #### JMM内存屏障插入策略
 
-- 在每个volatile写操作前插入一个写屏障（Store Barrier）
-- 在每个volatile写操作后插入一个写屏障（Store Barrier）
-- 在每个volatile读操作后插入一个读屏障（Load Barrier）
-- 在每个volatile读操作后再插入一个读屏障（Load Barrier）
+
+
+- 在每个volatile写操作前插入一个StoreStore Barrier
+- 在每个volatile写操作后插入一个StoreLoad Barrier
+- 在每个volatile读操作后插入一个LoadLoad Barrier
+- 在每个volatile读操作后再插入一个LoadStore Barrier
 
 ![内存屏障02.png](images/内存屏障02.png)
 
