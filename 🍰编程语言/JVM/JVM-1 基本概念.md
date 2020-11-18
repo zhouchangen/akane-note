@@ -1,6 +1,6 @@
 # JVM - 基本概念
 
-
+https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/index.html
 
 ## 基本概念
 

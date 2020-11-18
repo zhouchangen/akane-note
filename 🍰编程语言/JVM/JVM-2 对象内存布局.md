@@ -20,7 +20,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode)
 
 ### 普通对象
 
-1. 对象头 markword 8
+1. 对象头 markword 8字节
 
 2. ClassPointer指针： -XX:+UseCompressedClassPointers为4字节，不开始为8字节
 
@@ -33,7 +33,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode)
 
 ### 数组对象
 
-1. 对象头 markword 8
+1. 对象头 markword 8字节
 2. ClassPointer同上
 3. 数组长度：4字节
 4. 数组数据
@@ -81,7 +81,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode)
 
 
 
-**为什么GC年龄默认为15？**
+### 为什么GC年龄默认为15
 
 因为用的4bit存储，因此能表达式最大的数是15。
 
@@ -93,5 +93,3 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode)
 2. 直接指针
 
 
-
-### 对象如何分配
