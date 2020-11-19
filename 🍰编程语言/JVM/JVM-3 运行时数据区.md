@@ -1,7 +1,5 @@
 # JVM-运行时数据区和常用指令
 
-
-
 ## 面试题
 
 ```java
@@ -48,7 +46,7 @@ public class TestPlus {
 
 
 
-### 常见指令
+### 常见字节码指令
 
 \<clinit\>
 
@@ -71,7 +69,29 @@ invoke_xxxx
 
 示例：
 
+````java
+public class JVM_ByteCode {
+
+
+    public static void main(String[] args) {
+        JVM_ByteCode jvm_byteCode = new JVM_ByteCode();
+        jvm_byteCode.sum(10);
+    }
+
+    public int sum(int i){
+        return i + 1;
+    }
+}
+
+````
+
+字节码
+
 ```
+
+
+
+
 Classfile /D:/project/akane-note-collection/jvm-note/src/main/java/com/example/JVM_ByteCode.class
   Last modified 2020-11-19; size 374 bytes
   MD5 checksum 5b49e4a0411ba7182782d70442175867
@@ -147,7 +167,15 @@ SourceFile: "JVM_ByteCode.java"
 
 ```
 
+解读（建议用IDEA的JclassLib插件查看，对应字节码命令可以直接点击查看解释）：
 
+首先从main方法开始看，0 new分配一个堆内存空间，然后初始化默认值，然后4: invokespecial调用构造函数，压栈
+
+astore出栈，aload_1压栈。bipush将10压栈，调用sum方法。
+
+在sum方法中，iload_1将10压栈，iconst_1将常量1压栈，iadd将两个数弹出计算结果压栈，最后ireturn返回，并放入到栈中。
+
+最后pop弹出，return结束。
 
 
 

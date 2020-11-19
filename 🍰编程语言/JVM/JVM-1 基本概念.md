@@ -226,11 +226,9 @@ https://plugins.jetbrains.com/plugin/9248-jclasslib-bytecode-viewer
 
 当class被load到内存时，其实做了两件事情：一件是将在内存中分配给一块内存给class文件，另一件是生成了一个class对象，并指向了前面分配的地址。
 
-```
-class文件 <——class对象
-	^
-	|
-class load
+```sequence
+class load-->class文件:
+class对象-->class文件:
 ```
 
 
@@ -328,6 +326,8 @@ public class Launcher {
 
 ### 自定义类加载器
 
+继承 ClassLoader，实现相应的方法即可
+
 场景：
 
 - JRebel**热部署**中需重新load class，Tomcat或Spring中都有相应的场景。
@@ -337,11 +337,13 @@ https://www.cnblogs.com/szlbm/p/5504631.html
 
 
 
-**如果我们不想⽤双亲委派模型怎么办？** 为了避免双亲委托机制，我们可以⾃⼰定义⼀个类加载器，要继承 ClassLoader，然后重载 loadClass() 即可。
+**如何打破不想⽤双亲委派模型？**
 
-1、如果不想打破双亲委派模型，那么只需要重写findClass方法即可
+了解双亲委派模型，我们很容易就能想明白，我们可以⾃⼰定义⼀个类加载器，继承 ClassLoader，然后重载 loadClass() 即可。
 
-2、如果想打破双亲委派模型，那么就重写整个loadClass方法。场景：热部署，osgi tomcat都有自己的模块指定classloader（可以加载同一类库的不同版本）
+1. 如果想打破双亲委派模型，那么就重写整个loadClass方法。场景：热部署，osgi tomcat都有自己的模块指定classloader（可以加载同一类库的不同版本）
+
+2. 如果不想打破双亲委派模型，那么只需要重写**findClass**方法即可
 
 
 

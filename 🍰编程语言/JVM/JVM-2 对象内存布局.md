@@ -1,7 +1,5 @@
 # JVM - 对象内存布局
 
-
-
 ## 观察虚拟机配置
 
 java -XX:+PrintCommandLineFlags -version
@@ -22,10 +20,10 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode)
 
 1. 对象头 markword 8字节
 
-2. ClassPointer指针： -XX:+UseCompressedClassPointers为4字节，不开始为8字节
+2. ClassPointer指针： -XX:+UseCompressedClassPointers为4字节，不开启为8字节
 
 3. 实例数据
-   1. 引用类型： -XX:+UseCompressedOops为4字节，不开始为8字节。注：Oops：Ordinary Object Pointers
+   1. 引用类型： -XX:+UseCompressedOops为4字节，不开启为8字节。注：Oops：Ordinary Object Pointers
 
 4. Padding**对齐**，8的倍数
 

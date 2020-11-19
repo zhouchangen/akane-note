@@ -1,7 +1,5 @@
 # SpringBoot自动装配原理
 
-
-
 ## @SpringBootApplication
 
 ```java
