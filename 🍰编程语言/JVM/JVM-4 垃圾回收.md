@@ -109,11 +109,21 @@
 
 
 
-堆内存逻辑分区
+### 堆内存逻辑分区
 
-例如：
+![image-20201120002357289](images\image-20201120002357289.png)
 
-复制算法会把内存分为两个区域（即两个survivor空间：from和to）。当进行一次minor gc时（既年轻代的gc），minor gc是串行的，eden空间如果没有被gc root引用的会被回收，**而依然存活的会被移动到from空间中**，如果from空间在minor gc时对象依旧可以存活，就会对该对象年龄+1，当年龄达到一定数值时会直接放入老年代，没有达到年龄的存活对象会被复制到to中。这时from和eden空间已经被清空，虚拟机会交换from和to的空间，空的from变成to，to的变成from，保证了to是空的，minor gc会不断重复这样的工作，直到to彻底被填满，这时会将对象移动到老年代。
+逻辑分代里分为：新生代和老年代
+
+新生代：刚new出来的对象
+
+老年代：垃圾回收很多次未能回收的
+
+新生代又分为三个区域：一个eden、两个survivor（即from和to），默认比例是8：1：1
+
+
+
+当进行一次minor gc时（既年轻代的gc），minor gc是串行的，eden空间如果没有被gc root引用的会被回收，**而依然存活的会被移动到from空间中**，如果from空间在minor gc时对象依旧可以存活，就会对该对象年龄+1，当年龄达到一定数值时会直接放入老年代，没有达到年龄的存活对象会被复制到to中。这时from和eden空间已经被清空，虚拟机会交换from和to的空间，空的from变成to，to的变成from，保证了to是空的，minor gc会不断重复这样的工作，直到to彻底被填满，这时会将对象移动到老年代。
 
 
 
@@ -121,23 +131,57 @@
 
 https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 
+![image-20201120001424215](images\image-20201120001424215.png)
+
+Eden区：伊甸园区
+
+survivor区，又分为s0、s1，或叫from区、to区
+
+年轻代：Eden+s0+s1
+
+Old区：老年代
+
+-Xms：最小堆
+
+-Xmn：（注：n代表new）
+
+-Xmx：最大堆
+
+MinorGC/YGC：发生在年轻代，采用复制算法（注：YGC：Young GC）
+
+MajorGC：发生在老年代，采用标记压缩或标记清除算法
+
+FullGC：MinorGC+MajorGC
+
+动态年龄判断
+
+分代年龄
+
+逃逸对象
 
 
-栈上分配
+
+
+
+
+
+
+
+
+
+栈上分配（注：无需调整）
 
 - 线程私有小对象
 - 无逃逸
 - 支持标量替换
-- 无需调整
 
 
 
-线程本地分配TLAB(Thread Local Allocation Buffer)
+线程本地分配TLAB(Thread Local Allocation Buffer)（注：无需调整）
 
 - 占用eden，默认1%
 - 多线程的时候不用竞争eden就可以申请空间，提高效率
 - 小对象
-- 无需调整
 
 
 
@@ -146,3 +190,25 @@ https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 - 大对象
 
 eden
+
+
+
+
+
+**什么情况进入老年代Old区？**
+1、大对象直接进入老年代，可通过-XX:PretenureSizeThreshold设置
+2、分代年龄到达15会移动老年代，可通过-XX:MaxTenuringThreshold设置
+
+- Parallel Scavenge 15
+- CMS 6
+- G1 15
+
+3、对象动态年龄判断，可通过-XX: TargetSurvivorRatio设置
+
+
+
+
+
+ **对象动态年龄判断**
+
+当前放对象的Survivor区域里，一批对象的总大小大于这块Survivor区域内存大小的50%(-XX: TargetSurvivorRatio可以指定)，那么此时大于等于这批对象年龄最大值的对象，就可以直接进入老年代了。例如：Survivor区域里现有一批对象，年龄1+年龄2+年龄n的多个年龄对象总和超过了Survivor区域的50%,此时就会把年龄n(含以上)的对象都放入老年代。这个规则其实是希望那些可能是长期存活的对象，尽早进入老年代。对象动态年龄判断机制一般是在minor gc之后触发的。 
