@@ -202,7 +202,7 @@ ProducerType有两种模式 Producer.MULTI和Producer.SINGLE
 
 ### 等待策略
 
-1. (常用）BlockingWaitStrategy：通过线程阻塞的方式，等待生产者唤醒，被唤醒后，再循环检查依赖的sequence是否已经消费。
+1. 【常用】BlockingWaitStrategy：通过线程阻塞的方式，等待生产者唤醒，被唤醒后，再循环检查依赖的sequence是否已经消费。
 
 2. BusySpinWaitStrategy：线程一直自旋等待，可能比较耗cpu
 
@@ -214,9 +214,9 @@ ProducerType有两种模式 Producer.MULTI和Producer.SINGLE
 
 6. TimeoutBlockingWaitStrategy：相对于BlockingWaitStrategy来说，设置了等待时间，超过后抛异常
 
-7. （常用）YieldingWaitStrategy：尝试100次，然后Thread.yield()让出cpu
+7. 【常用】YieldingWaitStrategy：尝试100次，然后Thread.yield()让出cpu
 
-8. （常用）SleepingWaitStrategy : sleep
+8. 【常用】SleepingWaitStrategy : sleep
 
 
 
