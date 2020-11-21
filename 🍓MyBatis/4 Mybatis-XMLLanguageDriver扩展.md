@@ -1,7 +1,5 @@
 # Mybatis-XMLLanguageDriver扩展
 
-
-
 ## @Select注解中使用IN查询
 
 Mybatis原生的@Select注解并不支持IN查询，但是提供了Mybatis中提供了LanguageDriver，我们可用手动设置SqlSource。在这里，LanguageDriver的默认实现类为XMLLanguageDriver和RawLanguageDriver。另外还可以对@Insert和@Update增强，但是如果你使用tkMybatis或MybatisPlus，这些没必要了，其原理是一样的，具体的原理可阅读[Mybatis增强型注解简化SQL语句(一)](https://blog.csdn.net/ExcellentYuXiao/article/details/53262928)

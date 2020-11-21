@@ -1,4 +1,4 @@
-# MySQL explain执行计划
+# MySQL Explain执行计划
 
 来源：https://github.com/bjmashibing/InternetArchitect
 

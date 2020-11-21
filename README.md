@@ -19,7 +19,7 @@
 
 > [There is just something so natural about writing #markdown with @Typora.](https://twitter.com/tastapod/status/739121949104844800)
 >
->  ![img](images\bio-photo-square_bigger.jpg)[Dan North](https://twitter.com/tastapod)
+>  by [Dan North](https://twitter.com/tastapod)
 
 #### 2020/6/17
 

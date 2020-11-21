@@ -57,7 +57,7 @@ public class SqlSessionFactoryBean implements
 
 
 
-# 阅读
+## 阅读
 
 - [Mybatis官方中文文档](https://mybatis.org/mybatis-3/zh/index.html)
 - [Mybatis-Spring官方中文文档](http://mybatis.org/spring/zh/index.html)

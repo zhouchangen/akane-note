@@ -587,8 +587,6 @@ mvn dependency:tree
 
 
 
-
-
 ### 插件
 
 ```
@@ -727,8 +725,6 @@ mvn clearn package xxx.jar,xxx2.jar -Dmaven.test.skip=true -P test -U 打包成j
 
 
 ### 推荐阅读
-
-
 
 - [你确定 Maven 相关的东西全部了解吗](https://juejin.im/post/5edcc333e51d4578448005cc#heading-14)
 - [Maven入门，读完这篇就够了](https://juejin.im/post/5a4a5e2bf265da4322418d7f#heading-11)

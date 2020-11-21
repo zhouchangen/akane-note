@@ -20,11 +20,17 @@ sudo apt update
 
 ### 2.下载主题
 下载主题见[linux公社](https://www.linuxidc.com/theme/)
+
 或者搜索在[GNOME主题网站](https://www.gnome-look.org/browse/cat/135/)
+
 下载相应的主题，解压.
+
 把对应的文件移到/usr/share下对应的目录.
+
 比如：
+
 主题/usr/share/themes
+
 图标/usr/share/icons
 
 

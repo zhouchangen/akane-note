@@ -11,7 +11,9 @@ comments: true
 ### 什么是shell
 
 对于所有登录到unix系统的用户，系统都要为其开一个程序来管理用户与unix系统的交互工作，这个程序就是shell。
+
 常见的有Bourne shell(B-shell)及Korn shell(K-shell)，C shell。我們用的話就是B-shell
+
 shell作为一种用户与操作系统交互的工具与平台，shell的基本功能：
 
 1. 命令的解释执行

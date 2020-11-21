@@ -51,6 +51,7 @@ nohup $JAVA_HOME/bin/java $JAVA_OPTS -jar $jarfile $consul > $logDir 2>&1  &
 
 ```
 ps -ef | grep 服务名 | grep -v "grep\|bash" | awk '{print $2}' | xargs kill -9
+# 注：需了解awk语法
 ```
 
 

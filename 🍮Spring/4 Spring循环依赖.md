@@ -1,7 +1,5 @@
 # Spring循环依赖问题
 
-
-
 视频：子路老师Spring循环依赖讲解https://www.bilibili.com/video/BV1uE411d7L5?p=6
 
 注：在观看该视频的时候，其实前面11章已经将循环依赖问题讲解清除，后续的视频有些重复了。

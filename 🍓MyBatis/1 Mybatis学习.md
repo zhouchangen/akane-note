@@ -1,7 +1,5 @@
 # Mybatis学习
 
-# Mybatis
-
 在这里，是阅读Mybatis官方文档的总结，选择文档中的一些重点记录在这里，这并不是Mybatis的入门教程，因此需要你对Mybatis有一定的了解。如果想学习Mybatis的架构，可以阅读右边的Mybatis源码学习。
 
 ## 配置
@@ -343,7 +341,7 @@ public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
 
 
 
-# 阅读
+## 阅读
 
 - [Mybatis官方中文文档](https://mybatis.org/mybatis-3/zh/index.html)
 - [Mybatis-Spring官方中文文档](http://mybatis.org/spring/zh/index.html)

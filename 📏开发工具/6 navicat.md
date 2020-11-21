@@ -1,7 +1,5 @@
 # Navicat
 
-
-
 ### Navicat密码解密
 
 在线执行：https://tool.lu/coderunner/
@@ -153,3 +151,11 @@ echo $decode."\n";
 ?>
 ```
 
+
+
+## 常见使用
+
+1. 新增查询
+2. 导入导出
+3. 查看服务状态
+4. 推荐使用高版本Navicat（>=12版本），支持mongodb的查询

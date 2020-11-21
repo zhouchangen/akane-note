@@ -16,8 +16,6 @@
 
 
 
-
-
 ## 其他设置
 
 Setttings——Editor——General下有几个不错的设置
@@ -106,11 +104,7 @@ Shift + 滚轮前后滚动 当前文件的横向滚动轴滚动(用鼠标的时�
 
 
 
-
-
 ### ⾃动代码
-
-
 
 - fori/sout/psvm+Tab即可⽣成循环、System.out、main⽅法等boilerplate样板代码
 - 输⼊for(User user : users)只需输⼊user.for+Tab  
@@ -151,7 +145,7 @@ Alibaba Java Coding Guidelines 代码规范
 
 Grep Console 控制台多彩
 
-Lombok
+Lombok 让代码更简洁
 
 Mybatis Log Plugin
 
@@ -163,6 +157,6 @@ EasyCode Mybatis
 
 RestfulToolkit 可以根据URL跳转到对应的方法(全局快捷搜索：*Ctrl \\* )
 
-SonarLint
+SonarLint 代码检测
 
 Translation 翻译工具

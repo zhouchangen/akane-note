@@ -11,7 +11,7 @@ toc: true
 
 
 
-# Python3
+## Python3
 python是一门**动态**的**强类型解释性**编程语言
 
 
