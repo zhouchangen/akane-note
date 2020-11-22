@@ -1,6 +1,6 @@
 # JVM - 垃圾回收
 
-## 如何判断对象的死亡？
+## 如何判断对象的死亡（或者说如何判断垃圾对象）？
 
 - 引用计数器，为0（不能解决循环引用问题）
 - 可达性分析算法（GC Roots不可达）
@@ -23,7 +23,7 @@
 
 
 
-## GC算法
+## 常见的三种垃圾回收算法（GC算法）
 
 - 标记-清除（Mark-Sweep）
 
@@ -174,7 +174,7 @@ https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 - Eden区：伊甸园区
 - survivor区：又分为s0、s1，或叫from区、to区
 
-- -Xms：最小堆
+- -Xms：初始堆
 
 - -Xmn：年轻代分配大小（注：n代表new）
 - -Xmx：最大堆
@@ -183,7 +183,7 @@ https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 
 - MajorGC：发生在老年代，采用标记压缩或标记清除算法
 
-- FullGC：MinorGC+MajorGC
+- FullGC：MinorGC+MajorGC（老年代满了）
 
 - 动态年龄判断
 
@@ -246,6 +246,8 @@ https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 
 
 ## 概念解释
+
+### OOM和内存泄露
 
 **内存溢出**： out of memory，指程序在申请内存时，没有足够的内存空间供其使用，出现out of memory。例如：申请了一个integer，但给它存了long才能存下的数，那就是内存溢出。
 

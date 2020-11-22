@@ -24,6 +24,8 @@ command [options] [arguments] options选项，arguments参数
 
 如果你不懂命令，或者想了解更多，可以来这里：[Linux命令手册](https://git.io/linux)、linux教程 | 菜鸟教程
 
+https://www.linuxcool.com/?s=top
+
 
 
 然后就是开始一顿操作了

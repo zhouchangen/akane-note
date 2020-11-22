@@ -87,6 +87,8 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode)
 
 ### 对象定位
 
+https://blog.csdn.net/clover_lily/article/details/80095580
+
 1. 句柄池（间接指针）
 2. 直接指针
 

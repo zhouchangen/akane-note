@@ -179,11 +179,13 @@ astore出栈，aload_1压栈。bipush将10压栈，调用sum方法。
 
 
 
-### 方法区
+### 方法区（MethodArea）
 
-注意：方法区是一种定义或概念。所谓的永久代或元空间是其一种实现机制
+方法区是堆外的空间
 
-- 永久代Perm Space (<1.8) 
+注意：方法区是一种定义或概念。所谓的永久代或元空间是其一种实现机制。
+
+- 永久代Perm Generation(<1.8) 
 
   > 字符串常量位于PermSpace，FGC不会清理
 
@@ -201,7 +203,7 @@ astore出栈，aload_1压栈。bipush将10压栈，调用sum方法。
 
 
 
-## 问题：为什么要将永久代(PermGen)替换为元空间(MetaSpace)呢?
+## 问题：为什么要将永久代(1.7 PermGeneration)替换为元空间(1.8 MetaSpace)呢?
 
 - 永久代：固定⼤⼩上线，⽆法进⾏调整
 - 元空间：使⽤的是直接内存，默认是最大物理内存unlimited，可通过 -XX： MaxMetaspaceSize设置
