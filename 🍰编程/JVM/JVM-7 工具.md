@@ -234,7 +234,7 @@ Definitions:
 跟top命令一样，我们也可以指定刷新的频率，可选参数
 
 ```
- [root@test:/root] jstat -gc 32368 2000 20
+ [root@test:/root] jstat -gcutil 32368 2000 20
 每隔2000ms输出32368的gc情况，一共输出20次
 ```
 
@@ -252,13 +252,27 @@ Definitions:
 
 
 
-**C即Capacity 总容量，U即Used 已使用的容量**
+**C即Capacity 总容量，U即Used 已使用的容量，T即 time**
 
-- OC : Old区的总容量
-- OU : Old区已使用的容量
-- PC 当前perm（JDK1.8之前）的容量 (KB)
-- PU perm的使用 (KB)
-- MC 当前Metaspace(JDK1.8)的容量
+```bash
+S0C：第一个幸存区的大小
+S1C：第二个幸存区的大小
+S0U：第一个幸存区的使用大小
+S1U：第二个幸存区的使用大小
+EC：伊甸园区的大小
+EU：伊甸园区的使用大小
+OC：老年代大小
+OU：老年代使用大小
+MC：方法区大小
+MU：方法区使用大小
+CCSC:压缩类空间大小
+CCSU:压缩类空间使用大小
+YGC：年轻代垃圾回收次数
+YGCT：年轻代垃圾回收消耗时间
+FGC：老年代垃圾回收次数
+FGCT：老年代垃圾回收消耗时间
+GCT：垃圾回收消耗总时间
+```
 
 
 
@@ -266,22 +280,11 @@ Definitions:
 
 **命令：jstat -gccause pid**
 
-**C: count  T: time**
-
-- YGC : 新生代垃圾回收次数
-- YGCT : 新生代垃圾回收时间
-- FGC : 老年代垃圾回收次数
-- FGCT : 老年代垃圾回收时间
-- GCT : 垃圾回收总消耗时间
-
 ```
 [root@test:/root] jstat -gccause 32368
   S0     S1     E      O      M     CCS    YGC     YGCT    FGC    FGCT     GCT    LGCC                 GCC                 
   0.00  98.03   2.25  87.76  94.44  92.25     69    3.719     2    1.598    5.317 Allocation Failure   No GC  
 ```
-
-- LGCC：最近垃圾回收的原因
-- GCC：当前垃圾回收的原因
 
 
 
@@ -357,11 +360,13 @@ jmap - histo 4655 | head -20，查找有多少对象产生【**重要**】
 
 并且当我们对象比较复杂时，就只能dump文件下来分析了。
 
+
+
 ###  jmap –dump
 
 **命令：jmap –dump:format=b,file=/tmp/xxx.hprof pid**
 
-dump文件，便于后续分析。
+dump文件，便于后续分析。hprof猜测是heap + profiler的意思。
 
 但是需要注意：**线上系统，内存特别大，jmap执行期间会对进程产生很大影响，甚至卡顿，按需使用，一般都会在程序启动时设置参数HeapDumpPath自动dump（电商不适合）**
 
@@ -423,7 +428,11 @@ where <option> is one of:
 
 **命令：jhat xxx.hprof**
 
-jhat(JVM Heap Analysis Tool)命令是与jmap搭配使用，jhat内置了一个微型的HTTP/HTML服务器，生成dump的分析结果后，可以在浏览器中查看(Http://localhost:7000)
+jhat（JVM Heap Analysis Tool）
+
+jhat内置了一个微型的HTTP/HTML服务器，生成dump的分析结果后，可以在浏览器中查看(Http://localhost:7000)。
+
+JDK自带工具，支持OQL查询
 
 ```
 
@@ -441,6 +450,8 @@ Server is ready.
 ```
 
 ![image-20201123000359043](images\image-20201123000359043.png)
+
+
 
 ## 监控JVM
 
@@ -498,3 +509,8 @@ Eclipse的内存分析器是一种快速，功能丰富的Java堆分析工具，
 
 列出深栈中最大的消耗内存的对象
 
+
+
+
+
+## 对比 jhat、mat、jvisualvm
