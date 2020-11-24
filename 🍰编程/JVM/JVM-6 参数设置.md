@@ -3,8 +3,10 @@
 ## 如何设置JVM内存分配？
 
 ```
+# 示例
 $ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/xxxx.hprof" -jar xxx.jar
 
+# 设置参数
 -XX:+HeapDumpOnOutOfMemoryError
 -XX:HeapDumpPath=/usr/local/xxxx.hprof -jar
 -Xms1500m -Xmx1500m
@@ -67,7 +69,8 @@ $ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+H
 
 - -Xms
 - -Xmx
-- -XX:MaxMetaspaceSize
+- -XX:MetaspaceSize
+- XX:MaxMetaspaceSize
 
 | 参数                       |      | 描述                                                         |
 | -------------------------- | ---- | ------------------------------------------------------------ |
@@ -78,6 +81,7 @@ $ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+H
 | -Xoss                      |      | 本地方法栈大小，对hotspot无效                                |
 | XX:NewRatio                |      | **Young年轻代与Old老年代的比例，默认-XX:NewRatio=2**<br />说明：例如：-XX:NewRatio=4，即年轻代：年老代=1：4 |
 | -XX:SurvivorRatio          |      | **Eden与survivor的比例，默认XX:SurvivorRatio=8**<br />说明：例如：-XX:SurvivorRatio=4，即Eden:Survivor=4:1<br />我们看JVM内存模型常看到的，Eden占新生代的8/10，From幸存区和To幸存区各占新生代的1/10 |
+| -XX:MetaspaceSize          |      | 元空间                                                       |
 | -XX:MaxMetaspaceSize       |      | **最大元空间**                                               |
 | -XX:MaxTenuringThreshold   |      | **年轻代最大gc分代年龄，默认-XX:MaxTenuringThreshold=15**<br />如果超过这个阈值会直接接入老年代，如果设置为0，年轻代不经过survivor空间直接进入老年代 |
 | -XX:PretenureSizeThreshold |      | **设置大对象直接进入老年代的阈值，默认-XX:PretenureSizeThreshold=0**<br />当大对象大小超过该值将会直接在老年代分配，默认值是0，意思是不管多大都是先在eden中分配内存 |
@@ -139,7 +143,7 @@ $ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+H
 - -XX:+PrintFlagsFinal  最终参数值，示例：`java -XX:+PrintFlagsFinal -version | grep NewSize`
 - -XX:+PrintCommandLineFlags：打印在命令行中出现过的标记
 
-![image.png](H:/akane-note/🍰编程语言/JVM/images/java29.png)
+![image.png](images/java29.png)
 
 
 
@@ -362,4 +366,46 @@ user=0.00 用户态花费时间
 sys=0.00 内核花费时间
 real=0.00 secs 总共花费时间
 ```
+
+
+
+## 生产JVM参数设置
+
+生产上JVM的参数设置，大多是按照过往经验 ，然后结合实际情况做调整
+
+Xmx 和 Xms设置为老年代存活对象的3-4倍，即FullGC之后的老年代内存占用的3-4倍
+
+```
+$ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/xxxx.hprof" -jar xxx.jar
+```
+
+
+
+经验
+
+```
+cn-eu-gateway：-Xms1024m -Xmx2048m
+
+cn-order-web：2048m
+
+cn-order-receiver：1500m or 1000m
+
+cn-order-provider：2048m
+
+cn-order-provider-consumer：2048m
+
+cn-mdata-provider：2048m
+
+cn-dispatch-worker：2048m
+
+eu-wms-web：1500m
+
+eu-wms-provider-consumer：2048m
+
+eu-wms-biz-consumer：2048m
+
+eu-warehouse：1500m
+```
+
+
 

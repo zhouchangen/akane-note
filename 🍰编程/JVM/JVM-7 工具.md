@@ -229,20 +229,18 @@ Definitions:
 
 
 
-**命令：jstat -gcutil pid [时间隔] [次数]**
+**命令：jstat -gcutil pid [时间隔/s] [次数]**
 
 跟top命令一样，我们也可以指定刷新的频率，可选参数
 
 ```
- [root@test:/root] jstat -gcutil 32368 2000 20
-每隔2000ms输出32368的gc情况，一共输出20次
+ [root@test:/root] jstat -gcutil 32368 2000 5
+每隔2000ms输出32368的gc情况，一共输出5次
 ```
 
 
 
 **命令：jstat -gc pid**
-
-结果说明
 
 ```
  [root@test:/root] jstat -gc 32368
@@ -250,9 +248,9 @@ Definitions:
 9728.0 9728.0  0.0   5846.5 328704.0 200373.1  187904.0   164894.9  133504.0 126570.6 15488.0 14408.1     67    3.657   2      1.598    5.255
 ```
 
+结果说明
 
-
-**C即Capacity 总容量，U即Used 已使用的容量，T即 time**
+**C即Capacity 总容量，U即Used 已使用的容量，T即 time，单位(KB)**
 
 ```bash
 S0C：第一个幸存区的大小
@@ -508,8 +506,6 @@ Eclipse的内存分析器是一种快速，功能丰富的Java堆分析工具，
 ### Top Consumers 顶级消耗视图
 
 列出深栈中最大的消耗内存的对象
-
-
 
 
 

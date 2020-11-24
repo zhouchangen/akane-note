@@ -528,15 +528,40 @@ grep "test" test.log | awk -F ' ' '{print $3}' # 按' '分割，输出第三个
 ```
 processid=$(top -bn 1 | grep java | head -n1 | awk '{ print $1}');
 threadid=$(top -Hbn 1 -p ${processid} | grep java | head -n1 | awk '{ print $1}' | xargs printf  '%x');
-sudo /usr/local/src/jdk1.8.0_152/bin/jstack $processid | grep "0x$threadid" -A10 --color;
+sudo /usr/local/src/jdk1.8.0_152/bin/jstack $processid | grep "0x$threadid" -A100 --color;
 
+注意：sudo $JAVA_HOME/bin/jstack $processid | grep "0x$threadid" -A10 --color;
 ```
 
 解读：
 
-1. top -bn 1查看耗时高的进程，grep找到java程序，head -n1取第一行，接着使用awk进行分割取第一个字段。结果用变量processid保存。
+1. top -bn 1查看耗时高的进程（解释见top），grep找到java程序，head -n1取第一行，接着使用awk进行分割取第一个字段。结果用变量processid保存。
 2. 后面top -Hbn 1 -p同理，找到对应的进程耗时高的子线程，并且以十六禁止打印，结果用变量threadid保存。
 3. 最后用jstack命令查看
+
+
+
+**注意：**
+
+- 不加sudo会报**"Could not attach to "**，原因是：进程启动用户和自己jstat的用户不是同一个，使用sudo即可解决。
+- 单独执行sudo会报：**"命令 `sudo` 是被禁止的 ..."**，但是上面的语句连接在一起执行就不会报，猜测是会当成脚本而不是单独的命令行。
+- 如果配置了环境变量，可用$JAVA_HOME找到对应的java目录。例如：查看jdk内置的bin命令，`ls $JAVA_HOME/bin`
+- 
+
+
+
+##### **查看最繁忙进程的GC情况**
+
+```
+processid=$(top -bn 1 | grep java | head -n1 | awk '{print $1}');
+sudo /usr/local/src/jdk1.8.0_152/bin/jstat -gc $processid 3000 2;
+
+等价于（替换了$JAVA_HOME）
+processid=$(top -bn 1 | grep java | head -n1 | awk '{print $1}');
+sudo $JAVA_HOME/bin/jstat -gc $processid 3000 2;
+```
+
+同上，只不过这里用的jstat -gcutil命令，同理，还可以使用jmap、jinfo等。
 
 
 

@@ -259,3 +259,7 @@ Parallel GC with 8 thread(s)
 ## 如何查看设置的参数
 
 `java -XX:+PrintFlagsFinal -version | grep NewSize`
+
+`java -XX:+PrintFlagsInitial -version`
+
+注：通过grep过滤，PrintFlagsInitial可以查看默认值
