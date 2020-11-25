@@ -51,7 +51,12 @@ nohup $JAVA_HOME/bin/java $JAVA_OPTS -jar $jarfile $consul > $logDir 2>&1  &
 
 ```
 ps -ef | grep 服务名 | grep -v "grep\|bash" | awk '{print $2}' | xargs kill -9
-# 注：需了解awk语法
+# | 表示管道
+# ps -ef 以system v方式列出当前全部运行的进程，grep找到对应的服务信息。
+# grep -v反转查找，这样就能到对应服务的所在的行。
+# 接着用awk进行分割，默认是按照空格分割，$2表示第二个字段。
+# xargs 一般是和管道一起使用，给其他命令传递参数的一个过滤器
+# kill -9强制终止程序
 ```
 
 
@@ -157,6 +162,19 @@ funWithReturn(){
     echo "两个数字分别为 $aNum 和 $anotherNum !"
     return $(($aNum+$anotherNum))
 }
+
+# case语句
+case $变量名 in 
+ 模式1）
+ 	命令序列1
+ 	;;
+ 模式2）
+ 	命令序列2
+ 	;; 
+ *）
+ 	默认执行的命令序列     
+ ;; 
+esac
 ```
 
 
@@ -165,7 +183,7 @@ funWithReturn(){
 
 
 
-**decode.sh**
+**decode服务启动shell**
 
 ```
 # |----|home
@@ -183,14 +201,14 @@ funWithReturn(){
 # startup.log为服务启动日志
 # decode.hprof为内存溢出后自动dump的文件
 
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------
 # 示例
 
 # 根目录，设置统一的路径
 dir="/home/project"
 
 # JVM参数设置，可选
-JAVA_OPTS="-Xms128m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$dir/apps/decode.hprof"
+JAVA_OPTS="-Xms1500m -Xmx1500m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$dir/apps/decode.hprof"
 
 # 服务启动日志
 logDir="$dir/startup.log"

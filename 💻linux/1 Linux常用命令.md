@@ -1,10 +1,12 @@
-# 1 Linux常用命令
+# Linux常用命令
 
-在这里对Linux常用命令整理，分几个方面：
+在这里对Linux常用命令整理，只列举常用的，因为命令和可选参数实在太多了。分几个方面：
 
-1. 日志查询
+1. 查询日志
+2. 查看服务信息（负载、内存）
+3. 问题排查
 
-https://www.linuxcool.com/?s=top
+手册：man 命令、https://www.linuxcool.com/?s=top
 
 
 
@@ -21,17 +23,9 @@ command [options] [arguments]
 
 第一步就是连接跳板机，可以用工具，例如：Xshell，也可以直接在web上去连接。
 
-
-
-## 如何查看日志位置
-
-如果你不知道日志存储的位置，在Java项目中，都会配置自己的日志存储路径，如果是用log4j2的话，你应该可以到对应的配置文件(log4j2.xml)，找到日志存储的位置。
-
-
-
 ## 常用的简单命令
 
-#### **简单命令**
+### **简单命令**
 
 示例：
 
@@ -47,7 +41,7 @@ history：查看命令历史，学习他人用到的命令
 
 
 
-#### **切换目录**
+### **切换目录**
 
 https://wangchujiang.com/linux-command/c/cd.html
 
@@ -71,7 +65,7 @@ cd ~
 
 
 
-#### **当前目录展示**
+### **当前目录展示**
 
 https://wangchujiang.com/linux-command/c/ls.html
 
@@ -128,11 +122,49 @@ linux上的编辑器，简单了解即可。
 
 ## 日志查询相关命令
 
-上面的简单了解即可，接下来才是我们查询日志。在linux终端模式下并没有界面打开，因此我们第一个问题就是：如果查看文件内容？
+上面的简单了解即可，接下来才是查询日志。在linux终端模式下并没有界面打开，因此我们第一个问题就是：如果查看文件内容？
 
-上诉所讲的vi也是可以的，但是对我们来说使用太不友好了。下面就是我们用到的一些用于查看的命令。
+上诉所讲的vi也是可以的，但是对我们来说使用太不友好了。
 
-在学习之前我们可以先想一下我们有什么需求：首先我们希望可以去搜索关键字，其次最好颜色也像上面一样可以标记颜色，最后可以看看查询内容的上下文。Ok，下面你的问题都将会得到解答。
+在学习之前，我们可以先想一下有什么需求：首先我们希望可以去搜索关键字或正则表达式，其次最好颜色也像上面一样可以标记颜色，最后可以看看查询内容的上下文。
+
+Ok，下面你的问题都将会得到解答。
+
+
+
+### 如何查询日志
+
+如果你不知道日志存储的位置，在Java项目中，都会配置自己的日志存储路径。如果是用log4j2的话，对应的配置文件(log4j2.xml)，找到日志存储的位置。
+
+
+
+#### 我的经验 - 查询日志步骤
+
+1. 先定位是哪台服务器上的服务出了问题，连接上对应服务器，找到对应的日志存储位置
+
+2. log4j2.xml日志文件达到一定大小会进行压缩，可能需要到压缩文件下查看，用zgrep命令。【不然你可能一直很奇怪为什么查不到信息】
+
+3. **接着通过关键的信息去查找，比如：业务单号，业务数据等。找到对应的相关信息之后，可以通过对应信息所在的线程id去查找更多信息。**
+
+   日志的打印格式(**Pattern**)可以在log4j2.xml配置文件下查询
+
+```
+2019-08-31 00:00:00.414 ERROR [SimpleAsyncTaskExecutor-1] 1e1111c8-1bf4-4e2c-af43-db0bda2ba85c 后面的没有列出来
+
+日期——线程名——线程ID
+<pattern>%d [${APP_NAME}] [%thread] %-5level %logger[%M] - %msg%n</pattern>
+```
+
+
+
+- **坑：在这里要看是异步线程，还是同步线程，还是多线程。不然你可能通过该线程id找不到对应的日志错误信息。如果没有线程id，那就只能通过线程名称了**
+- **建议：如果是mq的消息，可以先找到mq消费的messageId，接着通过该messageId找到更多的信息。**
+
+- **坑：当遇到一个错误信息的时候，你可以看看代码，然后通过版本控制器看看是不是最近有人改了代码，然后找出来暴打问一顿。（笑）**
+
+- **补充：有些公司会将请求的方法打印出来，还可以根据方法的名称去搜索error.log信息**
+
+
 
 ### grep / zgrep / egrep
 
@@ -160,7 +192,7 @@ egrep 'ing:[0-9]{4,}' *.log --color
 
 
 
-#### **颜色标记**
+#### **颜色标记** --color
 
 -    --color=auto ：标记匹配颜色（能快速找到匹配的内容，高亮)【常用】
 
@@ -174,13 +206,13 @@ grep "test" *.log --color=auto
 
 
 
-#### **ABC神器**
+#### **ABC神器** -A -B -C
 
 - -A 除了显示符合范本样式的那一行之外，并显示该行之后的内容【常用】
 - -B 除了显示符合范本样式的那一行之外，并显示该行之前的内容【常用】
 - -C 除了显示符合范本样式的那一行之外，并显示该行前后后的内容【常用】
 
-- A：After后、B：Before前、C：前后
+- A：After后、B：Before前、C：content前后
 
 示例：有时候我们不仅是想看到符合的内容，**还想看到其上下文，这时候就得借助ABC选项了。**
 
@@ -192,9 +224,9 @@ grep "aes-256-gcm" shadowsocks.log -A2
 
 
 
-#### **正则查询**
+#### **正则查询** -E
 
-- -E ：使用正则表达式【常用】
+- -E ：（**R**egular **E**xpression）使用正则表达式【常用】
 
 示例：查询超时
 
@@ -205,9 +237,9 @@ cat /usr/local/logs/requestTime.log | grep -E "ing:[0-9]{4,}" -C 5
 
  
 
-#### **反转查找，致敬韦神**
+#### **反转查找，致敬韦神** -v
 
-- 输出除之外的所有行 **-v** 选项
+- -v：（invert-match）输出除之外的所有行 **-v** 选项
 
 示例：查询除了grep以外的行
 
@@ -225,7 +257,7 @@ grep -v "grep\|bash"
 
 #### **查看启动日志**
 
-- -f 显示文件最新追加的内容【常用】
+- -f：（follow）显示文件最新追加的内容【常用】
 
 示例：在启动项目的时候，日志是一点点打印，通过这个参数-f就能一直查看追加的内容
 
@@ -237,7 +269,7 @@ tailf other.log 注：等价于tail -f other.log
 
 #### **查看日志后500行**
 
-- -n 输出文件的尾部N（N位数字）行内容 【常用】
+- -n （--line-number）输出文件的尾部N（N位数字）行内容 【常用】
 - 其它
   - tail file ：(默认显示文件file的最后10行)
   - tail +20 file ：(显示文件file的内容，从第20行至文件末尾)
@@ -293,14 +325,16 @@ https://wangchujiang.com/linux-command/c/more.html
 
 介绍：按页显示文本内容
 
+为了控制滚屏，可以按Ctrl+S键，停止滚屏；按Ctrl+Q键可以恢复滚屏。按Ctrl+C（中断）键可以终止该命令的执行，并且返回Shell提示符状态。
+
 
 
 交互操作：
 
-- H（获得帮助信息）
+- h（获得帮助信息）
 - **Enter（向下翻滚一行）**
 - **空格（向下滚动一屏）**
-- Q（退出命令）
+- q（退出命令）
 
 
 
@@ -396,6 +430,15 @@ seq 5 | awk 'BEGIN{ sum=0; print "总和：" } { print $1"+"; sum+=$1 } END{ pri
 # 默认的字段定界符是空格
 echo -e "1 2 3" | awk '{print $1,$2,$3}'
 1 2 3
+
+# 指定分割符号，例如这里指定2
+echo -e "1 2 3" | awk -F '2' '{print $1,$2,$3}'
+1   3
+
+# 分割符号示例
+grep "test" test.log | awk -F ' ' '{print $3}' 
+注：按' '分割，输出第三个
+注：awk -F ' ' '{print $3}' 等价于 awk '{print $3}'
 
 
 # 可以定义一些变量
@@ -494,9 +537,35 @@ awk是一种编程语言，拥有编程语言基本的特性，例如：变量�
 
 
 
+#### xargs
+
+给其他命令传递参数的一个过滤器。（在awk下插多一条命令，主要是方面下面实战解释。）
+
+```
+假设一个命令为 sk.sh 和一个保存参数的文件 arg.txt：
+#!/bin/bash
+#sk.sh 命令内容，打印出所有参数。
+echo $*
+--------------------------------------------------------
+arg.txt 文件内容：
+cat arg.txt
+aaa
+bbb
+ccc
+--------------------------------------------------------
+cat arg.txt | xargs -I {} ./sk.sh -p {} -l
+-p aaa -l
+-p bbb -l
+-p ccc -l
+```
+
+
+
 #### **实战**
 
 ##### **关闭服务**
+
+示例：
 
 ```
 ps -ef | grep 服务名 | grep -v "grep\|bash" | awk '{print $2}' | xargs kill -9
@@ -505,25 +574,17 @@ ps -ef | grep 服务名 | grep -v "grep\|bash" | awk '{print $2}' | xargs kill -
 解读：
 
 1. | 表示管道
-2. ps -ef后面解释，grep找到对应的服务信息。
+2. ps -ef后面解释（以system v方式列出当前全部运行的进程），grep找到对应的服务信息。
 3. grep -v反转查找，这样就能到对应服务的所在的行。
 4. 接着用awk进行分割，默认是按照空格分割，$2表示第二个字段。
-5. xargs 一般是和管道一起使用，
-
-
-
-示例：
-
-```
-awk '{print $2}'
-grep "test" test.log | awk -F ' ' '{print $3}' # 按' '分割，输出第三个
-
-注：awk -F ' ' '{print $3}' 等价于 awk '{print $3}'
-```
+5. xargs 一般是和管道一起使用，给其他命令传递参数的一个过滤器
+6. kill -9强制终止程序
 
 
 
 #####  **查看最繁忙的线程**
+
+示例：
 
 ```
 processid=$(top -bn 1 | grep java | head -n1 | awk '{ print $1}');
@@ -546,11 +607,12 @@ sudo /usr/local/src/jdk1.8.0_152/bin/jstack $processid | grep "0x$threadid" -A10
 - 不加sudo会报**"Could not attach to "**，原因是：进程启动用户和自己jstat的用户不是同一个，使用sudo即可解决。
 - 单独执行sudo会报：**"命令 `sudo` 是被禁止的 ..."**，但是上面的语句连接在一起执行就不会报，猜测是会当成脚本而不是单独的命令行。
 - 如果配置了环境变量，可用$JAVA_HOME找到对应的java目录。例如：查看jdk内置的bin命令，`ls $JAVA_HOME/bin`
-- 
 
 
 
 ##### **查看最繁忙进程的GC情况**
+
+示例：
 
 ```
 processid=$(top -bn 1 | grep java | head -n1 | awk '{print $1}');
@@ -567,158 +629,545 @@ sudo $JAVA_HOME/bin/jstat -gc $processid 3000 2;
 
 ## 服务相关命令
 
-### 2.7 top
+### top
 
 当然除了查看文件，我们可能还需要看一些进程
 
+示例：top
+
+```
+top - 16:10:57 up 59 days, 48 min,  6 users,  load average: 0.00, 0.03, 0.00
+Tasks: 225 total,   1 running, 224 sleeping,   0 stopped,   0 zombie
+Cpu(s):  1.5%us,  1.3%sy,  0.0%ni, 97.1%id,  0.0%wa,  0.0%hi,  0.0%si,  0.1%st
+Mem:  16333704k total, 15213112k used,  1120592k free,   490716k buffers
+Swap:  2097144k total,   379596k used,  1717548k free,  3069352k cached
+```
+
+注意：最上面回展示一个load average: 0.00, 0.03, 0.00，下面会介绍。
 
 
 
+#### **线程模式 -H**
 
-实时查看系统运行状态
+-H：（Threads mode）设置线程模式，不带-H显示的是总和，带-H显示的内容更多。
 
-- -b：以批处理模式操作
-- -c：显示完整的治命令
-- -d：屏幕刷新间隔时间
-- -I：忽略失效过程
-- -s：保密模式
-- -S：累积模式
-- -i<时间>：设置间隔时间
-- -u<用户名>：指定用户名
-- -p<进程号>：指定进程(必备)
-- -n<次数>：循环显示的次数
+> Instructs top to display individual threads.  Without this command-line option a summation of all threads in each process is  shown.   Later  this  can  be changed with the `H' interactive command.
+>
+> 指示top显示单个线程。如果没有这个命令行选项，将显示每个进程中所有线程的总和。稍后可以用交互命令H更改
 
-在top命令执行过程中可以使用的一些交互命令。这些命令都是单字母的，如果在命令行中使用了-s选项， 其中一些命令可能会被屏蔽。
+示例
 
-输入top，然后按对应的键即可。**Ctrl+C停止太low了，试试按q直接退出。**
+```
+top -H
+```
 
-- h：显示帮助画面，给出一些简短的命令总结说明
-- k：终止一个进程
-- i：忽略闲置和僵死进程，这是一个开关式命令
-- q：退出程序
-- r：重新安排一个进程的优先级别
-- S：切换到累计模式
-- s：改变两次刷新之间的延迟时间（单位为s），如果有小数，就换算成ms。输入0值则系统将不断刷新，默认值是5s
-- f或者F：从当前显示中添加或者删除项目
-- o或者O：改变显示项目的顺序
+
+
+#### **屏幕刷新间隔时间 -d**
+
+-d：（Delay time）改变显示的更新速度，单位s。【或是在交互式指令列( interactive command)按 d或s，然后输入对应的数字。】
+
+示例：
+
+```
+top -d 5
+```
+
+
+
+#### **循环显示的次数 -n**
+
+-n：（Number-of-iterations）设置更新次数
+
+示例：
+
+```
+top -n 1
+```
+
+
+
+#### **以批处理模式操作 -b**
+
+-b：（Batch-mode operation）以批处理模式操作。在此模式，可进行输出。
+
+>  Starts top in Batch mode, which could be useful for sending output from top to other programs or to a file.  In this mode, top will not  accept  input  and runs until the iterations limit you've set with the `-n' command-line option or until killed.
+
+示例：
+
+```
+top -b
+```
+
+
+
+#### **显示进程信息 -p**
+
+-p：(Monitor-PIDs mode) 指定进程，显示进程信息
+
+示例：
+
+```
+top -p pid
+```
+
+
+
+#### **交互模式**
+
+在top命令执行过程中可以使用的一些交互命令。
+
+
+
+- h：显示帮助画面，给出一些简短的命令总结说明【常用】
+- q：退出程序，**Ctrl+C停止太low了，试试按q直接退出。**【常用】
+- d或s：屏幕刷新间隔时间，单位s。输入0值则系统将不断刷新，默认值是3s【常用】
+- 1：数字1能够查看CPU信息，当然也可以看到是几核 【常用】
+
+- M：（Memory）根据驻留内存大小进行排序【常用】
+- P：（CPU）根据CPU使用百分比大小进行排序【常用】
+- T：（Time）根据时间/累计时间进行排序【常用】
+- w：将当前设置写入~/.toprc文件中
 - l：切换显示平均负载和启动时间信息
 - m：切换显示内存信息
 - t：切换显示进程和CPU状态信息
-- c：切换显示命令名称和完整命令行
-- M：根据驻留内存大小进行排序
-- P：根据CPU使用百分比大小进行排序
-- T：根据时间/累计时间进行排序
-- w：将当前设置写入~/.toprc文件中
-- 1：数字1能够查看CPU信息，当然也可以看到是几核 【常用】
 
 
 
-### 2.8 ps
+#### **实战**
 
-- ps -aux是以BSD方式列出当前全部运行的进程
-- ps -ef是以system v方式列出当前全部运行的进程 【常用】
-- 上面两个命令虽然显示的都是当前全部运行进程，但是ps -aux列出的条目更多
-- ps -axj 列出守护进程
-- ps -l 列出ps中的进程操作命令及编号，例如kill等
-- **ps -ef | grep init 查找当前运行进程中的的init进程** 【常用】
+示例：
 
+```
+top -Hbn 1 | grep java
+top -Hp
+top -Hn 1 
 
-
-### 2.9 kill
-
-用来删除执行中的程序或工作，生产上要是删除了，怕是要跑路了？
-
-- -a：当处理当前进程时，不限制命令名和进程号的对应关系；
-- -l <信息编号>：若不加<信息编号>选项，则-l参数会列出全部的信息名称；
-- -p：指定kill 命令只打印相关进程的进程号，而不发送任何信号；
-- -s <信息名称或编号>：指定要送出的信息；
-- -u：指定用户。
-- -9：表示强制杀死该进程
-
-### 2.10 上传下载文件
-
-有时候你也可能需要下载文件，可以用下面两个命令。
-
-- rz 上传文件命令
-- sz 下载文件到本地
+top 按键：M P T 通常我们会查看占用内存或者CPU，看看服务负载是否高
+```
 
 
 
-### 2.11 查看系统存储情况
+### free、df、du显示磁盘的相关信息
 
-1. df命令可以显示目前所有文件系统的可用空间及使用情形
-2. du：查询文件或文件夹的磁盘使用空间
+#### free
+
+free：显示系统中可用和可用的物理内存和交换内存的总量，以及内核使用的缓冲区和高速缓存。
+
+-  -b：（bytes）以Byte为单位显示内存使用情况
+-  -k：（kilo）以KB为单位显示内存使用情况
+- -m：（mega）以MB为单位显示内存使用情况
+-  -g：（giga）以GB为单位显示内存使用情况
+- -h：（human）以对人类友好的方式显示内情况【常用】
+
+示例：
+
+```
+[app@test ~]$ free -h
+             total       used       free     shared    buffers     cached
+Mem:           15G        14G       447M       652K       139M       5.0G
+-/+ buffers/cache:       9.7G       5.6G
+Swap:          15G        99M        15G
+```
+
+
+
+#### df
+
+df：（file system disk）可以显示目前所有文件系统的可用空间及使用情形
+
+- -h：（human）以对人类友好的方式显示内情况【常用】
+- -l或--local：仅显示本地端的文件系统（注：比如像我们挂载的u盘就不属于本地端了）【常用】
+
+示例：
+
+```
+[app@test ~]$ df -h
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/xvda3            132G   65G   61G  52% /
+tmpfs                 7.6G     0  7.6G   0% /dev/shm
+/dev/xvda1            190M   27M  154M  15% /boot
+172.16.3.211:/opt/my_mount
+                      1.5T  945G  497G  66% /usr/local/my_mount
+[app@test ~]$ df -lh
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/xvda3      132G   65G   61G  52% /
+tmpfs           7.6G     0  7.6G   0% /dev/shm
+/dev/xvda1      190M   27M  154M  15% /boot
+```
+
+
+
+#### du
+
+du：（disk usage）查询文件或文件夹的磁盘使用空间
+
+- -h：（human）以对人类友好的方式显示内情况【常用】
+- --max-depth 查看下级文件下
+
+示例：
 
 ```
 df -h 
 du -h --max-depth=1 ./
+
+[app@4px5-28 ~]$ du -h
+4.0K    ./.ansible/tmp
+8.0K    ./.ansible
+8.0K    ./.ssh
+8.0K    ./.oracle_jre_usage
+96K     .
 ```
 
 
 
+#### 总结
 
-
-### 2.13 ping
-
-将ICMP ECHO_REQUEST数据包发送到网络主机
-
-
-
-### 2.14 curl
+常用 `free | df -h`
 
 
 
-### 2.15 traceroute
+### uptime 查看系统负载信息
+
+https://www.cnblogs.com/rexcheny/p/9382396.html
+
+查看系统负载信息。（当然也可以用top或w命令查看，前面介绍过）
+
+示例：
+
+```
+[root@test:/root] uptime
+ 16:04:29 up 59 days, 42 min,  6 users,  load average: 0.03, 0.05, 0.01
+ # load average 系统在过去的1分钟、5分钟和15分钟内的平均负载
+ # 应该关注5分钟或者15分钟，因为CPU偶尔高一些比较正常，但是如果最近15分钟都很高就需要调查了
+```
+
+
+
+**什么是系统平均负载？**
+
+系统平均负载是指在特定时间间隔内运行队列中的平均进程数，见下图。
+
+简单来说：有多少核心即为有多少负载（load）
+
+> DESCRIPTION
+>        uptime  gives  a one line display of the following information.  The current time, how long the system has been running, how
+>        many users are currently logged on, and the system load averages for the past 1, 5, and 15 minutes.
+>
+>        This is the same information contained in the header line displayed by w(1).
+>     
+>        System load averages is the average number of processes that are either in a runnable or uninterruptable state.   A  process
+>        in  a  runnable  state is either using the CPU or waiting to use the CPU.  A process in uninterruptable state is waiting for
+>        some I/O access, eg waiting for disk.  The averages are taken over the three time intervals.  Load averages are not  normal‐
+>        ized  for the number of CPUs in a system, so a load average of 1 means a single CPU system is loaded all the time while on a
+>        4 CPU system it means it was idle 75% of the time.
+
+![img](images/load.png)
+
+
+
+**CPU高不等同于load高，load高不等于CPU高**
+
+CPU负载高利用率低：说明等待的任务多
+
+CPU利用率高负载低：说明任务少，但是任务执行时间长
+
+
+
+**理想的CPU load是多少？**
+
+理想情况下一个核心被一个进程占用，即：LOAD不应该超过最大核心数量
+
+【应该关注5分钟或者15分钟，因为CPU偶尔高一些比较正常，但是如果最近15分钟都很高就需要调查了】
+
+
+
+### w 
+
+显示目前登入系统的用户信息
+
+> Show who is logged on and what they are doing
+
+示例：
+
+```
+w
+```
+
+
+
+### watch
+
+可以将命令的输出结果输出到标准输出设备，多用于周期性执行命令/定时执行命令
+
+- -t或-no-title：会关闭watch命令在顶部的时间间隔,命令，当前时间的输出。
+
+示例：
+
+```
+watch -t uptime
+```
+
+
+
+### ps
+
+当前处理程序的快照报告
+
+> report a snapshot of the current processes.
+
+- -e：显示所有程序，和-A效果一样
+
+- -f：（Do **full**-**format** listing），显示所有格式列表，例如：UID,PPIP,C与STIME栏位
+
+- -a：显示与终端无关的程序
+
+  - >  Select all processes except both session leaders (see getsid(2)) and processes not associated with a terminal
+
+- -u：列出属于该用户的程序的状况
+
+- x：显示所有程序，不以终端机来区分
+
+  - > Lift the BSD-style "must have a tty" restriction, which is imposed upon the set of all processes when some BSD-style (without "-") options are used or
+    >               when the ps personality setting is BSD-like.  The set of processes selected in this manner is in addition to the set of processes selected by other
+    >               means.  An alternate description is that this option causes ps to list all processes owned by you (same EUID as ps), or to list all processes when used
+    >               together with the a option.
+
+示例：
+
+```
+ps -ef 【常用】 注：为什么不用ps -Af，猜测是ef更方便记忆
+
+ps -aux
+
+ps -ef | grep init 查找当前运行进程中的的init进程【常用】
+
+```
+
+>     注：以system v方式列出当前全部运行的进程
+>
+>     To see every process on the system using standard syntax:
+>           ps -e
+>           ps -ef
+>           ps -eF
+>           ps -ely
+>
+>     注：以BSD方式列出当前全部运行的进程
+>
+>     To see every process on the system using BSD syntax:
+>           ps ax
+>           ps axu
+
+
+
+### kill
+
+发送信号到进程
+
+- -a：当处理当前进程时，不限制命令名和进程号的对应关系
+- -l <信息编号>：若不加<信息编号>选项，则-l参数会列出全部的信息名称【常用】
+- -p：指定kill 命令只打印相关进程的进程号，而不发送任何信号
+- -s <信息名称或编号>：指定要送出的信息
+- -n：\<SIG\>信号名称对应的数字
+- -u：指定用户
+
+
+
+#### 列出信号名称
+
+平时你可能用过`kill -9`，但是否知道其意思。-9其实是对应一个信号名称，你可以用以下命令查询。
+
+示例：
+
+```
+[root@test:/root] kill -l
+ 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP
+ 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1
+11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM
+16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP
+21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ
+26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR
+31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
+38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
+43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
+48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
+53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
+58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
+63) SIGRTMAX-1	64) SIGRTMAX	
+```
+
+说明：
+
+HUP     1    终端挂断 
+
+INT     2    中断（同 Ctrl + C）
+
+QUIT    3    退出（同 Ctrl + \） 
+
+KILL    9    强制终止 【常用】
+
+TERM   15    终止 
+
+CONT   18    继续（与STOP相反，fg/bg命令） 
+
+STOP   19    暂停（同 Ctrl + Z）
+
+
+
+#### 实战
+
+- -9：强制终止 【常用】
+
+示例：
+
+```
+kill -9
+
+[root@test ~]# sleep 90 &
+[1] 24509
+[root@test ~]# kill -9 24509
+
+# ----------------------------------------------------------------------------------------------------------------------------------------
+stop(){
+    echo "关闭服务中..."
+    # decode选择要关闭的服务 对应: spring.application.name
+    ps -ef | grep decode | grep -v "grep\|bash" | awk '{print $2}' | xargs kill -9
+}
+```
+
+
+
+### 上传下载文件
+
+有时候可能需要上传下载文件，可以用下面两个命令
+
+- rz：上传文件命令
+- sz：下载文件到本地
+
+示例：
+
+```
+rz 
+sz test.txt
+```
+
+
+
+### ping
+
+测试主机之间网络的连通性，执行ping指令会使用ICMP传输协议，将ICMP ECHO_REQUEST数据包发送到网络主机。
+
+- -c<完成次数>：设置完成要求回应的次数【常用】
+- -i<间隔秒数>：指定收发信息的间隔时间，单位秒【常用】
+
+示例：
+
+```
+ping bing.com
+ping -c5 bing.com
+ping -i2 bing.com
+```
+
+
+
+### curl
+
+利用URL规则在命令行下工作的文件传输工具，理解为命令行的请求
+
+- -X/--request：指定什么命令，例如：POST、GET
+- -H/--header：自定义头信息传递给服务器
+- -d/--data：HTTP POST方式传送数据
+
+示例：
+
+```
+curl http://127.0.0.1:8080/test -X POST -d '{"code":"test"}' -H "Content-Type:application/json"
+```
+
+
+
+### traceroute
+
+显示数据包到主机间的路径【常用于排查网络问题】
 
 traceroute跟踪从IP网络获取到给定主机的**路由信息包**。它利用IP协议的生存时间（TTL）字段并尝试从每个网关到主机的路径引发ICMP TIME_EXCEEDED响应。
 
-
-
-**2.16 wget**
-
-GNU Wget是一个免费实用程序，用于从Web非交互式下载文件。它支持HTTP，HTTPS和FTP协议，以及通过HTTP代理进行检索。
-
-
-
-### 2.17 free
-
-free显示系统中可用和可用的物理内存和交换内存的总量，以及内核使用的缓冲区和高速缓存。
-
-
-
-## 3. 总结
-
-上面的命令只是帮助我们查询，一般来说，我们去查询的时候，先定位一下是哪一个服务器上出了问题，连接上对应服务器，找到对应的日志存储位置。
-
-**接着通过唯一的id去查找，找到对应的id相关信息之后，通过该id所在的线程id去查找。**
-
-日志的打印格式(**Pattern**)可以在log4j2.xml配置文件下找
+示例：
 
 ```
-2019-08-31 00:00:00.414 ERROR [SimpleAsyncTaskExecutor-1] 1e1111c8-1bf4-4e2c-af43-db0bda2ba85c 后面的没有列出来
+traceroute bing.com
 
-日期——线程名——线程ID
+```
+
+说明：
+
+- 记录按序列号从1开始，每个记录就是一跳 ，每跳表示一个网关，每行有三个时间，单位是ms
+- 如果延时比较长，可能原因：网关阻塞、DNS出现问题导致不能解析主机名、域名
+
+
+
+### wget
+
+https://wangchujiang.com/linux-command/c/wget.html
+
+Linux系统下载文件工具，支持HTTP，HTTPS和FTP协议，以及通过HTTP代理进行检索。
+
+- -b：-background 启动后转入后台执行
+- -i：-input-file=FILE 下载在FILE文件中出现的URLs
+
+示例：
+
+```
+# 单个下载
+wget http://www.jsdig.com/testfile.zip
+
+# 后台下载
+wget -b http://www.jsdig.com/testfile.zip
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+# 下载多个文件
+wget -i filelist.txt
+首先，保存一份下载链接文件：
+cat > filelist.txt
+url1
+url2
+url3
+url4
 ```
 
 
 
-**在这里要看是异步线程，还是同步线程，还是多线程，不然你可能通过该线程id找不到对应的日志错误信息。如果没有线程id，那就只能通过线程名称了**
+### lscpu
 
-其次，如果是mq的消息，你可以先找到mq消费的**messageId**，接着通过该messageId找到更多的信息。
+显示有关CPU架构的信息
 
+示例：
 
-
-log4j2.xml日志文件大小达到一定的数量，你就只能到压缩文件查看了，用zgrep命令。不然你可能一直很奇怪为什么查不到信息。
-
-**坑：当遇到一个错误信息的时候，你可以看看代码，然后通过版本控制器看看是不是最近有人改了代码，然后找出来暴打问一顿。（笑）**
-
-
-
-**补充：还可以根据方法的名称去搜索error.log信息**
+```
+lscpu
+```
 
 
 
+## 查看CPU个数
+
+方式多种多样，个人推荐是第一种
+
+```
+方式一：
+top 然后按照1
 
 
-为了控制滚屏，可以按Ctrl+S键，停止滚屏；按Ctrl+Q键可以恢复滚屏。按Ctrl+C（中断）键可以终止该命令的执行，并且返回Shell提示符状态。
+方式二：
+cat /proc/cpuinfo | grep processor
 
+方式三：
+lscpu
+
+```
+
+
+
+## 总结
+
+实战出真知，常用的命令都在上面了，在实际中能解决大部分问题。
