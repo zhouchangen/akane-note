@@ -515,4 +515,12 @@ Eclipse的内存分析器是一种快速，功能丰富的Java堆分析工具，
 
 
 
+### OOM生产实战分析
+
+基本上根据包名（package name）找到相关的信息，就能定位到问题了。当然也要注意一下String对象，内容包含了一些重要信息，比如：SQL、请求参数。
+
+![线上oom.png](images/线上oom.png)
+
+
+
 ## 对比 jhat、mat、jvisualvm

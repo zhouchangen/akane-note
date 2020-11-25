@@ -37,7 +37,14 @@ df -lh
 du -h
 
 # 查看最繁忙服务
+top -bn 1 | grep java
 top -bn 1 | grep java | head -n1 | awk '{ print $1}'
+
+# 越过错误
+# 错误一：命令 `sudo` 是被禁止的 ...
+# 错误二：Attaching to process ID 21245, please wait...
+i=21245;
+sudo $JAVA_HOME/bin/jmap -heap $i
 
 
 # 查看最繁忙的线程
