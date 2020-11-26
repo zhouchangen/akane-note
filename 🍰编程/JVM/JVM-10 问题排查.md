@@ -2,6 +2,11 @@
 
 ### 常用整理
 
+- 查看服务负载
+- 查看错误日志（error.log）
+- 查看gc、heap情况
+- dump文件分析
+
 ```
 # 查看系统负载load average:1分钟 5分钟 15分钟
 watch
