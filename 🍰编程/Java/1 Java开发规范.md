@@ -1,10 +1,8 @@
-# 1 Java开发规范
+# Java开发规范
 
 参考：https://github.com/alibaba/p3c    [阿里巴巴Java开发手册（华山版）.pdf](https://github.com/alibaba/p3c/blob/master/阿里巴巴Java开发手册（华山版）.pdf)
 
 在这里只选取一些我觉得可能比较容易被我们忽略的规范。
-
-
 
 # 编程规约
 
