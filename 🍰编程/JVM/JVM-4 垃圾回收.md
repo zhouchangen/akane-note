@@ -17,7 +17,14 @@
 
 #### GC Roots根节点
 
-虚拟栈(即线程栈)的本地变量、静态变量、常量池、本地方法栈(native)的变量等等。 
+- 虚拟栈(即线程栈)的本地变量
+
+- 静态变量
+
+- 常量
+
+- 本地方法栈中的JNI(native方法)的引用对象
+- 活跃线程的引用对象
 
 
 
@@ -169,26 +176,17 @@ https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 ### JVM一些概念列表
 
 - 年轻代：Eden+s0+s1
-
 - Old区：老年代
 - Eden区：伊甸园区
 - survivor区：又分为s0、s1，或叫from区、to区
-
 - -Xms：初始堆
-
 - -Xmn：年轻代分配大小（注：n代表new）
 - -Xmx：最大堆
-
 - MinorGC/YGC：发生在年轻代，采用复制算法（注：YGC：Young GC）
-
 - MajorGC：发生在老年代，采用标记压缩或标记清除算法
-
-- FullGC：MinorGC+MajorGC（老年代满了）
-
+- FullGC：MinorGC+MajorGC（老年代满了）(注：一些人会把MajorGC==FullGC，这些概念解读已经混乱，不去深究。以当前的理解即可)
 - 动态年龄判断
-
 - 分代年龄
-
 - 逃逸对象
 
 
@@ -197,7 +195,7 @@ https://kuaibao.qq.com/s/20190228A0656E00?refer=spider
 
 内存分配主要是按照下面的流程，并不是像我们所理解的，new就直接分配到堆上，还有可能分配到栈上。
 
-![image-20201121003640585](H:\akane-note\🍰编程语言\JVM\images\image-20201121003640585.png)
+![image-20201121003640585](images\image-20201121003640585.png)
 
 
 
@@ -317,7 +315,7 @@ jvm误区--动态对象年龄判定：https://www.jianshu.com/p/989d3b06a49d
 
 ### STW
 
-GC的时候会导致STW，也就是stop the world，这个时候会去暂停正在运行的线程（在客户的使用角度来看，就是感觉系统有点卡顿的样子）
+GC的时候会导致STW，也就是`stop the world`，这个时候会去暂停正在运行的线程（在客户的使用角度来看，就是感觉系统有点卡顿的样子）
 
 因此，我们要进行调优，就是要避免STW，避免Full GC。正常的Full GC周期是几天或几周。
 

@@ -23,7 +23,7 @@ JVM：Java虚拟机（Java Virtual Machine）JVM是一种规范，JVM与Java无�
 
 
 
-注意：Java是一门跨平台的语音，而JVM则是跨语音的平台
+注意：Java是一门跨平台的语言，而JVM则是跨语言的平台
 
 原因：**JVM与Java无关，只跟class有关**，任何语言只要能编译成class文件，就能在JVM上执行。
 
@@ -210,7 +210,7 @@ https://plugins.jetbrains.com/plugin/9248-jclasslib-bytecode-viewer
 1. Loading加载（双亲委派机制，懒加载：需要再加载）
 2. Linking连接
    1. Verification验证 (验证文件是否符合JVM规定)
-   2. Preparation准备 (例如：给静态变量赋默认值0)
+   2. Preparation准备 (例如：给静态变量赋**默认值**0)
    3. resolution解析 (将类、方法、属性等符合应用解析为直接引用。常量池中的各种符合引用解析为指针、偏移量等内存地址的直接引用)
 3. initializing初始化 (静态变量赋值为初始值)
 
@@ -484,6 +484,40 @@ Hello
 sun.misc.Launcher$AppClassLoader@18b4aac2
 sun.misc.Launcher$AppClassLoader@18b4aac2
 ```
+
+
+
+### 类的加载方式
+
+- 隐式加载：new
+- 显示加载：loadClass、forName等
+
+
+
+### loadClass和forName的区别
+
+- Class.forName得到的class是已经初始化完成的
+- ClassLoader.loadClass得到的class是还没有链接的
+
+源码分析：
+
+```
+   // initialize：true 
+   public static Class<?> forName(String className)
+                throws ClassNotFoundException {
+        Class<?> caller = Reflection.getCallerClass();
+        return forName0(className, true, ClassLoader.getClassLoader(caller), caller);
+    }
+    
+    // ----------------------------------------
+    java.lang.ClassLoader#loadClass(java.lang.String, boolean)
+    // resolve: 是否链接，详细见前面的class的加载过程
+    if (resolve) {
+    	resolveClass(c);
+    }
+```
+
+
 
 
 

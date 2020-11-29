@@ -1,12 +1,18 @@
 # Linux常用命令
 
+## Linux的体系结构
+
+分用户态和内核态
+
+![image-20201129114311825](H:\akane-note\💻linux\images\image-20201129114311825.png)
+
 在这里对Linux常用命令整理，只列举常用的，因为命令和可选参数实在太多了。分几个方面：
 
 1. 查询日志
 2. 查看服务信息（负载、内存）
 3. 问题排查
 
-手册：man 命令、https://www.linuxcool.com/?s=top
+手册：man 命令、https://wangchujiang.com/linux-command/
 
 
 
@@ -309,7 +315,7 @@ head -n500 info.log
 
 ### 管道
 
-介绍：管道并不是命令，而是对于多个命令的连接
+介绍：可将多个命令连接起来，前一个指令的输出作为后一个指令的输入
 
 示例： 
 
@@ -627,6 +633,70 @@ sudo $JAVA_HOME/bin/jstat -gc $processid 3000 2;
 
 
 
+#### 对文件内容做统计
+
+示例：
+
+```
+awk '{print $1, $4}' netstat.txt 
+
+awk '$1 =="tcp" && $2==1{print $0}' netstat.txt 
+
+awk '{arr[$1]}END{for(i in arr)print i"\t" arr[i]}'
+```
+
+
+
+### sed
+
+https://wangchujiang.com/linux-command/c/sed.html
+
+介绍：stream editor，功能强大的流式文本编辑器
+
+#### 批量替换文件内容
+
+示例：
+
+- -i 匹配并写入替换
+- g命令：全部替换
+- d命令：删除
+
+```
+sed 's/book/books/' file
+
+sed -i 's/book/books/' file
+
+# 全部替换
+sed -i 's/book/books/g' file
+
+# 删除空白行
+sed '/^$/d' file
+```
+
+
+
+### find
+
+介绍：find命令可以根据给定的路径和表达式查找的文件或目录，支持正则。
+
+#### 查找特定文件
+
+- -name：按照名称查找
+- -iname：忽略大小写
+
+示例：
+
+```
+find -name "test"
+
+find / -name "test"
+
+find ~ -name "target*"
+find ~ -iname "target*" # 忽略大小写
+```
+
+
+
 ## 服务相关命令
 
 ### top
@@ -855,7 +925,7 @@ https://www.cnblogs.com/rexcheny/p/9382396.html
 >        many users are currently logged on, and the system load averages for the past 1, 5, and 15 minutes.
 >
 >        This is the same information contained in the header line displayed by w(1).
->     
+>         
 >        System load averages is the average number of processes that are either in a runnable or uninterruptable state.   A  process
 >        in  a  runnable  state is either using the CPU or waiting to use the CPU.  A process in uninterruptable state is waiting for
 >        some I/O access, eg waiting for disk.  The averages are taken over the three time intervals.  Load averages are not  normal‐

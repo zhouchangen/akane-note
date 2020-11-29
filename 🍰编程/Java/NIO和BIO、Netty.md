@@ -9,9 +9,9 @@
 
 Tomcat7.0是BIO
 
-
-
 InputStream、OutputStream
+
+![image-20201129013017809](images\image-20201129013017809.png)
 
 
 
@@ -37,3 +37,7 @@ channel
 Input Output
 
 文件系统、网络服务、内存
+
+
+
+![image-20201129013058293](images\image-20201129013058293.png)

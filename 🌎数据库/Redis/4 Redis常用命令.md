@@ -163,7 +163,7 @@ SELECT <dbid>
 
 
 
-## 基本命令
+## 基本数据类型
 
 ```
 查找key：
@@ -273,9 +273,60 @@ OK
 
 
 
+![image-20201129013744378](images\image-20201129013744378.png)
+
+
+
+### Hash
+
+使用场景：和String差不多，但更适合存**对象**
+
+```
+127.0.0.1:6379> hset myhash k1 v1
+(integer) 1
+127.0.0.1:6379> hset myhash k2 v2
+(integer) 1
+127.0.0.1:6379> hget myhash k1
+"v1"
+127.0.0.1:6379> hmset myhash k3 v3 k4 v4
+OK
+127.0.0.1:6379> hgetall myhash
+1) "k1"
+2) "v1"
+3) "k2"
+4) "v2"
+5) "k3"
+6) "v3"
+7) "k4"
+8) "v4"
+127.0.0.1:6379> hdel myhash k4
+(integer) 1
+127.0.0.1:6379> hgetall myhash
+1) "k1"
+2) "v1"
+3) "k2"
+4) "v2"
+5) "k3"
+6) "v3"
+127.0.0.1:6379> hlen myhash
+(integer) 3
+127.0.0.1:6379> hexists myhash k1
+(integer) 1
+127.0.0.1:6379> hkeys myhash
+1) "k1"
+2) "k2"
+3) "k3"
+127.0.0.1:6379> hvals myhash
+1) "v1"
+2) "v2"
+3) "v3"
+```
+
+
+
 ### List
 
-使用场景：可用作堆、队列、阻塞队列
+使用场景：默认是**先进后出**的方式。可用作堆、队列、阻塞队列。最新消息排行榜
 
 ```
 127.0.0.1:6379> lpush list one
@@ -360,54 +411,9 @@ OK
 
 
 
-### Hash
-
-使用场景：和String差不多，但更适合存对象
-
-```
-127.0.0.1:6379> hset myhash k1 v1
-(integer) 1
-127.0.0.1:6379> hset myhash k2 v2
-(integer) 1
-127.0.0.1:6379> hget myhash k1
-"v1"
-127.0.0.1:6379> hmset myhash k3 v3 k4 v4
-OK
-127.0.0.1:6379> hgetall myhash
-1) "k1"
-2) "v1"
-3) "k2"
-4) "v2"
-5) "k3"
-6) "v3"
-7) "k4"
-8) "v4"
-127.0.0.1:6379> hdel myhash k4
-(integer) 1
-127.0.0.1:6379> hgetall myhash
-1) "k1"
-2) "v1"
-3) "k2"
-4) "v2"
-5) "k3"
-6) "v3"
-127.0.0.1:6379> hlen myhash
-(integer) 3
-127.0.0.1:6379> hexists myhash k1
-(integer) 1
-127.0.0.1:6379> hkeys myhash
-1) "k1"
-2) "k2"
-3) "k3"
-127.0.0.1:6379> hvals myhash
-1) "v1"
-2) "v2"
-3) "v3"
-```
-
-
-
 ### Zset
+
+有序不重复集合
 
 使用场景：排行榜应用实现，取Top N
 
@@ -532,6 +538,18 @@ OK
 
 
 
+### Redis数据类型实现原理
+
+底层数据类型基础
+
+- 简单动态字符串
+- 链表
+- 字典
+- 跳跃表
+- 整数集合
+- 压缩列表
+- 对象
+
 
 ## Redis 事务
 
@@ -612,6 +630,10 @@ QUEUED
 ## Redis订阅
 
 一种消息通信模式，关键字：public发布者、subscribe订阅者
+
+缺点：消息的发布是无状态的，无法保证可达
+
+解决：使用Kafka、rabbitmq
 
 
 

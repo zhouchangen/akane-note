@@ -17,7 +17,7 @@
 
 ## 垃圾回收器分类
 
-**注：红线表示能组合，Young和Old的组合，例如：PS+PO，表示Young用PS，Old用PO。在下图中Old表示的是老年代版本**。
+**注：红线表示能组合，红色箭头表示常用组合。Young和Old的组合，例如：PS+PO，表示Young用PS，Old用PO。在下图中Old表示的是老年代版本**。
 
 垃圾回收组合：
 
@@ -31,11 +31,11 @@
 
 
 
-### 1、Serial GC
+### 1、Serial GC(-XX:+UseSerialGC 复制算法)
 
 > a stop-the-world, copying collector which uses a single GC thread.
 
-**串行单线程GC**，会STW。
+**串行单线程GC**，会STW。标记复制算法
 
 - 单CPU效率最高
 - jvm参数指定-client时默认的垃圾收集器
@@ -44,7 +44,24 @@
 
 
 
-### 2、Serial Old GC（老奶奶）
+JVM运行模式
+
+- Server
+
+- Client
+
+```
+C:\Users\AkaneMurakawa>java -version
+java version "1.8.0_171"
+Java(TM) SE Runtime Environment (build 1.8.0_171-b11)
+Java HotSpot(TM) 64-Bit Server VM (build 25.171-b11, mixed mode) # Server模式
+```
+
+
+
+
+
+### 2、Serial Old GC（老奶奶）(-XX:+UseSerialOldGC 标记-压缩算法)
 
 > a stop-the-world, mark-sweep-compact collector that uses a single GC thread.
 
@@ -52,7 +69,7 @@
 
 
 
-### 3、Parallel Scavenge GC（PS）
+### 3、Parallel Scavenge GC（PS）(-XX:+UseParallelGC 复制算法)
 
 > a stop-the-world, copying collector which uses a multiple GC thread.
 
@@ -67,7 +84,7 @@
 
 
 
-### 4、Parallel Old GC（PO）
+### 4、Parallel Old GC（PO）(-XX:+UseParallelOldGC 标记-压缩算法)
 
 > a compacting collector that uses multiple GC threads.
 
@@ -77,7 +94,7 @@
 
 
 
-### 5、ParNew GC （Parallel New）
+### 5、ParNew GC （Parallel New）(-XX:+UseParNewGC 复制算法)
 
 > a stop-the-world, copying collector which uses multiple GC thread.
 >
@@ -91,11 +108,13 @@
 
 [https://docs.oracle.com/en/java/javase/13/gctuning/ergonomics.html#GUID-3D0BB91E-9BFF-4EBB-B523-14493A860E73](https://docs.oracle.com/en/java/javase/13/gctuning/ergonomics.html)
 
-### 6、CMS（Concurrent Mark Sweep）
+### 6、CMS（Concurrent Mark Sweep）(-XX:+UseConcMarkSweepGC 标记清除算法)
 
 注：为了配合CMS，诞生了PN，CMS是**1.4**版本后期引入，CMS开启了并发回收的过程，但是CMS问题较多，因此目前没有任何一个JDK版本默认为CMS。
 
 **CMS并发垃圾回收是因为无法忍受STW**
+
+注意：这里用的是标记清除算法
 
 
 
@@ -205,15 +224,25 @@ https://zhuanlan.zhihu.com/p/105495961/
 
 
 
-### 7、G1（Garbage-First）
+### 7、G1（Garbage-First）(-XX:+UseG1Gc 复制+标记压缩算法)
 
 算法：三色标记 + SATB
 
-并发和并行，分代，空间整理，可预测停顿)
+G1收集器特点：
 
-**G1为jdk1.7实验性gc，为java9默认的gc；**
+- 并发和并行
+- 分代收集
+- 空间整理
+- 可预测停顿
 
 
+
+**G1为jdk1.7实验性gc，为java9默认的gc**
+
+- 将整个Java堆内存划分成多个大小相等的Region
+- 年轻代和老年代不再物理隔离
+
+![image-20201129154455566](images\image-20201129154455566.png)
 
 ### 8、ZGC(jdk11)
 

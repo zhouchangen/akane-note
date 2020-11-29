@@ -65,27 +65,31 @@ $ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+H
 
 ### 性能优化参数说明
 
-常用：
+常用的调优参数：
 
 - -Xms
 - -Xmx
+- -Xss
 - -XX:MetaspaceSize
 - XX:MaxMetaspaceSize
+- -XX:SurvivorRatio
+- XX:NewRatio
+- -XX:MaxTenuringThreshold
 
-| 参数                       |      | 描述                                                         |
-| -------------------------- | ---- | ------------------------------------------------------------ |
-| -Xms                       |      | **Java Heap初始值**<br />说明：最好将-Xms和-Xmx设为相同值（为了避免在运行时频繁调整Heap的大小） |
-| -Xmx                       |      | **Java Heap最大值**<br />说明：默认值为物理内存的1/4最佳设值应该视物理内存大小及计算机内其他内存开销而定 |
-| -Xmn                       |      | **Java Heap中Young区大小**<br />说明：**默认年轻代和年老代是1/3：2/3的关系。**所以增大年轻代后，将会减小**年老代**大小。此值对系统性能影响较大，Sun官方推荐配置为整个堆的3/8。 |
-| -Xss                       |      | 栈空间                                                       |
-| -Xoss                      |      | 本地方法栈大小，对hotspot无效                                |
-| XX:NewRatio                |      | **Young年轻代与Old老年代的比例，默认-XX:NewRatio=2**<br />说明：例如：-XX:NewRatio=4，即年轻代：年老代=1：4 |
-| -XX:SurvivorRatio          |      | **Eden与survivor的比例，默认XX:SurvivorRatio=8**<br />说明：例如：-XX:SurvivorRatio=4，即Eden:Survivor=4:1<br />我们看JVM内存模型常看到的，Eden占新生代的8/10，From幸存区和To幸存区各占新生代的1/10 |
-| -XX:MetaspaceSize          |      | 元空间                                                       |
-| -XX:MaxMetaspaceSize       |      | **最大元空间**                                               |
-| -XX:MaxTenuringThreshold   |      | **年轻代最大gc分代年龄，默认-XX:MaxTenuringThreshold=15**<br />如果超过这个阈值会直接接入老年代，如果设置为0，年轻代不经过survivor空间直接进入老年代 |
-| -XX:PretenureSizeThreshold |      | **设置大对象直接进入老年代的阈值，默认-XX:PretenureSizeThreshold=0**<br />当大对象大小超过该值将会直接在老年代分配，默认值是0，意思是不管多大都是先在eden中分配内存 |
-| -XX:TargetSurvivorRatio    |      | **对象动态年龄判断，默认-XX:TargetSurvivorRatio=50**<br />解释：s0 -> s1超过s1的50%，把年龄最大的放入Old。<br />当从s0、eden区放入到s1时，如果这批对象的大小超过s1的50%，则将>=这批对象年龄最大的对象，放入到Old。 |
+| 参数                       | 描述                                                         |
+| -------------------------- | ------------------------------------------------------------ |
+| -Xms                       | **Java Heap初始值**<br />说明：最好将-Xms和-Xmx设为相同值（为了避免在运行时频繁调整Heap的大小，内存抖动） |
+| -Xmx                       | **Java Heap最大值**<br />说明：默认值为物理内存的1/4最佳设值应该视物理内存大小及计算机内其他内存开销而定 |
+| -Xmn                       | **Java Heap中Young区大小**<br />说明：**默认年轻代和年老代是1/3：2/3的关系。**所以增大年轻代后，将会减小**年老代**大小。此值对系统性能影响较大，Sun官方推荐配置为整个堆的3/8。 |
+| -Xss                       | 规定了每个线程虚拟机栈(堆栈)                                 |
+| -Xoss                      | 本地方法栈大小，对hotspot无效                                |
+| XX:NewRatio                | **Young年轻代与Old老年代的比例，默认-XX:NewRatio=2**<br />说明：例如：-XX:NewRatio=4，即年轻代：年老代=1：4 |
+| -XX:SurvivorRatio          | **Eden与survivor的比例，默认XX:SurvivorRatio=8**<br />说明：例如：-XX:SurvivorRatio=4，即Eden:Survivor=4:1<br />我们看JVM内存模型常看到的，Eden占新生代的8/10，From幸存区和To幸存区各占新生代的1/10 |
+| -XX:MetaspaceSize          | 元空间                                                       |
+| -XX:MaxMetaspaceSize       | **最大元空间**                                               |
+| -XX:MaxTenuringThreshold   | **年轻代最大gc分代年龄，默认-XX:MaxTenuringThreshold=15**<br />如果超过这个阈值会直接接入老年代，如果设置为0，年轻代不经过survivor空间直接进入老年代 |
+| -XX:PretenureSizeThreshold | **设置大对象直接进入老年代的阈值，默认-XX:PretenureSizeThreshold=0**<br />当大对象大小超过该值将会直接在老年代分配，默认值是0，意思是不管多大都是先在eden中分配内存 |
+| -XX:TargetSurvivorRatio    | **对象动态年龄判断，默认-XX:TargetSurvivorRatio=50**<br />解释：s0 -> s1超过s1的50%，把年龄最大的放入Old。<br />当从s0、eden区放入到s1时，如果这批对象的大小超过s1的50%，则将>=这批对象年龄最大的对象，放入到Old。 |
 
 
 

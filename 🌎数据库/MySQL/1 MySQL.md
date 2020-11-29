@@ -140,6 +140,17 @@ show status like 'last_query_cost';
 
 
 
+#### show variables 和 show status
+
+查看系统变量和服务状况
+
+```mysql
+show variables like '%query%'
+show status like '%slow_queries%'
+
+set global slow_query_log = on;
+```
+
 
 
 
@@ -806,6 +817,24 @@ count(1) 与 count(主键 id)
 
 count(1) 执行得要比 count(主键 id) 快。因为从引擎返回 id 会涉及到解析数据行，以及拷贝字段值的操作。
 
-
-
 结论：按照效率排序的话，count(字段) < count(主键 id) < count(1) ) ≈count(\*)
+
+可以用explain进行测试
+
+## DDL和DML
+
+DML：Insert、Update、Delete
+
+DDL：对表结构的修改
+
+
+
+## 关键语法
+
+- GROUP BY：
+  - 满足“SELECT子句中的列名必须为分组列或列函数”
+  - 列函数对于group by子句定义的每个组各返回一个结果
+- HAVING:
+  - 通常和GROUP BY子句一起使用
+  - WHERE过滤行，HAVING过滤组
+  - WHERE > GROUP BY > HAVING

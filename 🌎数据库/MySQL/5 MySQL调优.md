@@ -117,6 +117,8 @@ mysql> show variables like '%sort_buffer_size%';
 SHOW VARIABLES LIKE 'slow_query%';
 
 SHOW VARIABLES LIKE 'long_query_time';
+
+set global slow_query_log = on;
 ```
 
 
