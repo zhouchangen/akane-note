@@ -9,6 +9,8 @@
 而CyclicBarrier拥有CountDownLatch的所有功能，还可以使用reset()方法重置屏障，**称为“循环的屏障”。**
 Barrier：屏障
 
+![image-20201129232948405](images\image-20201129232948405.png)
+
 
 
 用途：限流，入口特别多，但是出口限制住（但是一般用Guava RateLimiter）

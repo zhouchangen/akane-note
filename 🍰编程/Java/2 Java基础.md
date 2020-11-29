@@ -239,11 +239,31 @@ transient 关键字修饰的变量，无需进行序列化。
 
 
 
+### 1.8异常
 
+Throwable
+
+- Error：程序无法处理的系统错误，编译器不做检查
+  - NoClassDefFoundError
+  - StackOverflowError
+  - OutOfMemoryError
+- Exception：程序可以处理的异常，捕获后可恢复
+  - RuntimeException：非预知的 
+    - NullPointerExceptin
+    - ClassCastException
+    - IllegalArgumentException
+    - IndexOutOfBoundsExceptin
+    - NumberFormatException
+  - 非RuntimeException：可预知的
+    - ClassNotFoundException
+    - IOException
+
+异常处理机制
+
+- 抛出异常
+- 捕获异常
 
 ## 2 基础知识
-
-
 
 ### 2.1 重写与重载
 
@@ -922,7 +942,7 @@ JDK1.7使用的是分段锁
 JDK1.8使用synchronized和CAS极大的提高了HashMap的并发能力，只要做了以下两点优化：
 
 - synchronized：锁首个节点，这样**只要hash不冲突，就不会产生并发**
-- addCount：主要是为了扩容，利用的是CAS。注意addCount不在synchronized代码块里
+- casTabAt：利用的是CAS进行添加
 
 ```java
 public V put(K key, V value) {
@@ -942,6 +962,7 @@ public V put(K key, V value) {
             tab = initTable();
 
         else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+            // CAs进行添加
             if (casTabAt(tab, i, null,
                          new Node<K,V>(hash, key, value, null)))
                 break;                   // no lock when adding to empty bin

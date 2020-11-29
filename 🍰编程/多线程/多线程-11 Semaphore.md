@@ -1,8 +1,10 @@
 # 多线程 - Semaphore
 
-
-
 Semaphore：信号的意思。信号量。允许多个线程同时访问（对比：ReentrantLock只允许一个）
+
+
+
+![image-20201129233238100](images\image-20201129233238100.png)
 
 
 

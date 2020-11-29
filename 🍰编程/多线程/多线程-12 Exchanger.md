@@ -1,10 +1,8 @@
 # 多线程 - Exchanger
 
+Exchanger：交换机
 
-
-Exchanger：交换机。
-
-
+![image-20201129233325419](images\image-20201129233325419.png)
 
 用途：
 
