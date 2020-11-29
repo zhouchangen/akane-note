@@ -1259,7 +1259,7 @@ void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory);
 
 ### 3.5 invokeBeanFactoryPostProcessors()
 
-说明：调用BeanFactoryPostProcessor的postProcessBeanFactory()方法
+说明：调用BeanFactoryPostProcessor的postProcessBeanFactory()方法。例如：**ConfigurationClassParser**，解析Bean配置
 
 
 
@@ -1702,7 +1702,7 @@ public class MyListener implements ApplicationListener<ContentEvent> {  // Conte
 
 ### 3.9 onRefresh()
 
-说明：允许子类在进行bean初始化之前进行一些定制操作。默认空实现，钩子函数。
+说明：允许子类在进行bean初始化之前进行一些定制操作。默认空实现，钩子函数。例如：**创建Tomcat容器**
 
 
 
@@ -3729,10 +3729,10 @@ Constructor > @PostConstruct > InitializingBean > initMethod > DisposableBean > 
 ## Bean的生命周期
 
 1. Aware
-2. BeanPostProcessors beforeInitilaz
+2. BeanPostProcessors beforeInitilazation
 3. initializeBean
 4. init-method
-5. BeanPostProcessors afterInitilaz
+5. BeanPostProcessors afterInitilazation
 6. DisposableBean
 7. destroy-method
 

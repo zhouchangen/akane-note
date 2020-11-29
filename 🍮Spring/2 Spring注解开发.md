@@ -4,6 +4,27 @@
 
 
 
+## 概念
+
+### DI依赖注入
+
+Dependency Injection 依赖注入，**把底层类作为参数传递给上层类，实现上层对下层的控制**
+
+
+
+**依赖注入方式**
+
+- Setter
+- Interface
+- Constructor
+- Annotation
+
+![image-20201130003338936](images\image-20201130003338936.png)
+
+### DL依赖查找
+
+Dependency Lookup 依赖查找
+
 ## 注入
 
 ```java
