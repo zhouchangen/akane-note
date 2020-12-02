@@ -157,7 +157,7 @@ $ java -Xms256m -Xmx256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+H
 - -XX:+UseTLAB 使用TLAB，默认打开
 - -XX:+PrintTLAB 打印TLAB的使用情况
 - -XX:TLABSize 设置TLAB大小
-- -XX:+DisableExplictGC System.gc()不管用 ，FGC
+- -XX:+DisableExplictGC 使得System.gc()不管用 ，因为调用该方法会导致FGC
 - -XX:+PrintGC
 - -XX:+PrintGCDetails
 - -XX:+PrintHeapAtGC
