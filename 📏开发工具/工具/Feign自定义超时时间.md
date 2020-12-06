@@ -1,4 +1,6 @@
-# Feign自定义超时时间
+# Feign
+
+## 自定义超时时间
 
 ```
 
@@ -13,3 +15,4 @@ public class MdataRemoteConfiguration {
 ```
 
 <https://www.jianshu.com/p/191d45210d16>
+

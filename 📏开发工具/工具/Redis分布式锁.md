@@ -4,7 +4,7 @@
 
 ## 代码示例
 
-```
+```java
 分布式锁
 /**
  * 分布式锁的服务提供者。此类是线程安全的。
@@ -154,7 +154,7 @@ try {
 
 setnx
 
-```
+```java
 public boolean setIfAbsent(String key, Object value, long time) {
     return redisTemplate.execute((RedisCallback<Boolean>) redisConnection -> BooleanUtils.isTrue(redisConnection.set(key.getBytes(), value.toString().getBytes(), Expiration.seconds(time), RedisStringCommands.SetOption.SET_IF_ABSENT)));
 }

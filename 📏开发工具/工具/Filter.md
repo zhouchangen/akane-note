@@ -2,7 +2,11 @@
 
 ## Filter
 
-```
+过滤器
+
+用途：例如登录拦截等，权限拦截等
+
+```java
 @Slf4j
 public class ReceiverFilter implements Filter {
 
@@ -62,14 +66,21 @@ public class ReceiverConfig implements WebMvcConfigurer {
 // 另一种写法
 @Component
 @WebFilter(filterName = "MDCFilter", urlPatterns = "/*")
-public class MDCFilter implements Filter {}
+public class MDCFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+		// 通过，执行
+        filterChain.doFilter(servletRequest, servletResponse);
+    }
+}
 ```
 
 
 
 ## HttpServletRequestWrapper
 
-```
+```java
 public class BodyReaderHttpServletRequestWrapper extends HttpServletRequestWrapper {
     private final byte[] body;
 
