@@ -1,4 +1,4 @@
-# MYSQL Performance Schema详解
+# MySQL Performance Schema详解
 
 来源：https://github.com/bjmashibing/InternetArchitect
 
